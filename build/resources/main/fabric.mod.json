@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "srcmov",
+  "version": "0.2.0-beta",
+
+  "name": "Source Movement",
+  "description": "Allows you to change a variety of values regarding player movement physics, as well as use some new features to achieve Source-engine-like bunnyhopping movement.",
+  "authors": [
+    "Jorbon"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": ""
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/srcmov/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "edu.jorbonism.source_movement.Srcmov"
+    ],
+    "server": [
+      "edu.jorbonism.source_movement.Srcmov"
+    ]
+  },
+  "mixins": [
+    "srcmov.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "fabric": "*",
+    "minecraft": "1.16.x"
+  },
+  "suggests": {
+    "flamingo": "*"
+  }
+}
