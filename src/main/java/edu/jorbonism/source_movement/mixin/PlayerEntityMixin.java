@@ -39,7 +39,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 			return;
 
 		FluidState fluidState = this.world.getFluidState(this.getBlockPos());
-		if (this.isFallFlying() || ((this.isTouchingWater() || this.isInLava()) && this.method_29920() && !this.canWalkOnFluid(fluidState.getFluid())))
+		if (this.isFallFlying() || ((this.isTouchingWater() || this.isInLava()) && this.shouldSwimInFluids() && !this.canWalkOnFluid(fluidState.getFluid())))
 			return;
 		
 		double oldx = this.getX(), oldy = this.getY(), oldz = this.getZ();
@@ -105,7 +105,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 			double d = this.getX() - this.prevX;
 			double e = this instanceof Flutterer ? this.getY() - this.prevY : 0;
 			double f = this.getZ() - this.prevZ;
-			float g = MathHelper.sqrt(d * d + e * e + f * f) * 4.0F;
+			float g = MathHelper.sqrt((float)(d * d + e * e + f * f)) * 4.0F;
 			if (g > 1.0F) {
 				g = 1.0F;
 			}
@@ -135,7 +135,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 			if (horizontalSpeed2 < 1E-8)
 				return;
 			
-			double horizontalSpeed = MathHelper.sqrt(horizontalSpeed2);
+			double horizontalSpeed = Math.sqrt(horizontalSpeed2);
 			
 
 			// adjust for analog input; this does't account for the apparent diagonal speed boost present in vanilla in all movement modes, but that doesn't really matter
@@ -143,7 +143,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 			if (inputSpeed >= 1)
 				inputSpeed = 1;
 			else
-				inputSpeed = MathHelper.sqrt(inputSpeed);
+				inputSpeed = Math.sqrt(inputSpeed);
 
 			
 			double maxSpeed = speedTarget() * srcmov.doubles.get("abh threshold");
@@ -152,7 +152,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 				double speedAddition = maxSpeed - horizontalSpeed;
 
 				// deduce the forward direction (erroneously)
-				float yawRadians = this.yaw * 0.017453292F;
+				float yawRadians = this.getYaw() * 0.017453292F;
 				Vec3d forward = new Vec3d(-MathHelper.sin(yawRadians), 0, MathHelper.cos(yawRadians));
 				if (this.forwardSpeed < 0) // if s key, reverse forward direction
 					forward = forward.multiply(-1);
@@ -191,7 +191,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		if (this.hasStatusEffect(StatusEffects.JUMP_BOOST))
 			jumpVelocity += 0.1 * (this.getStatusEffect(StatusEffects.JUMP_BOOST).getAmplifier() + 1);
 
-		double jumpPower = MathHelper.sqrt(5 * 2 * srcmov.doubles.get("gravity") * srcmov.doubles.get("jump height"));
+		double jumpPower = Math.sqrt(5 * 2 * srcmov.doubles.get("gravity") * srcmov.doubles.get("jump height"));
 		// I've included the y component and added another term to cancel out some constant downward momentum while grounded
 		y += jumpVelocity * jumpPower + srcmov.doubles.get("gravity") * (1 - srcmov.doubles.get("vertical air friction"));
 
@@ -205,7 +205,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 			doJumpBoost = this.forwardSpeed > 1E-4 && !this.isSneaking();
 
 		if (doJumpBoost) {
-			float yawRadians = this.yaw * 0.017453292F;
+			float yawRadians = this.getYaw() * 0.017453292F;
 			if (srcmov.booleans.get("directional jump boosting"))
 				yawRadians -= MathHelper.atan2(this.sidewaysSpeed, this.forwardSpeed);
 
@@ -239,8 +239,8 @@ public abstract class PlayerEntityMixin extends LivingEntity {
         	return;
     	
         Vec3d inputAcc = (d > 1 ? movementInput.normalize() : movementInput).multiply(speed);
-        double f = MathHelper.sin(this.yaw * 0.017453292F);
-        double g = MathHelper.cos(this.yaw * 0.017453292F);
+        double f = MathHelper.sin(this.getYaw() * 0.017453292F);
+        double g = MathHelper.cos(this.getYaw() * 0.017453292F);
         Vec3d a = new Vec3d(inputAcc.x * g - inputAcc.z * f, inputAcc.y, inputAcc.z * g + inputAcc.x * f);
 
 
@@ -263,10 +263,10 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		if (srcmov.booleans.get("use source control cap") && !this.onGround && !this.abilities.flying) {
 			// if velocity projected onto acceleration is over the speed cap, don't allow the acceleration to occur
 			double multiplier = 1;
-			double inputSpeed = d > 1 ? 1 : MathHelper.sqrt(d);
+			double inputSpeed = d > 1 ? 1 : Math.sqrt(d);
 			if (inputSpeed >= 1.0E-7D) {
 				// the proposed change in velocity and the magnitude of the acceleration vector
-				double am = MathHelper.sqrt(a.x * a.x + a.z * a.z);
+				double am = Math.sqrt(a.x * a.x + a.z * a.z);
 				// ax and az are normalized components of horizontal acceleration
 				double ax = a.x / am;
 				double az = a.z / am;
@@ -337,7 +337,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		double x = MathHelper.clamp(velocity.x, -cap, cap);
 		double z = MathHelper.clamp(velocity.z, -cap, cap);
 		double y = Math.max(velocity.y, -cap);
-		if (y < 0 && !this.getBlockState().isOf(Blocks.SCAFFOLDING) && this.isHoldingOntoLadder())
+		if (y < 0 && !this.world.getBlockState(this.getBlockPos()).isOf(Blocks.SCAFFOLDING) && this.isHoldingOntoLadder())
 			y = 0;
 
 		if (this.horizontalCollision || this.jumping)
@@ -348,7 +348,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 
 	private void executeActionQueue() {
 		VelocityAction actionSet = new VelocityAction(Srcmov.actionQueue);
-		this.setVelocity(actionSet.execute(this.getVelocity(), new Vec3d(this.sidewaysSpeed, this.upwardSpeed, this.forwardSpeed), this.yaw * 0.017453292F, this.pitch * 0.017453292F));
+		this.setVelocity(actionSet.execute(this.getVelocity(), new Vec3d(this.sidewaysSpeed, this.upwardSpeed, this.forwardSpeed), this.getYaw() * 0.017453292F, this.getPitch() * 0.017453292F));
 		Srcmov.actionQueue.clear();
 	}
 

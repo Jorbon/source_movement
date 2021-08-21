@@ -1,6 +1,0 @@
-v1	named	intermediary
-FIELD	edu/jorbonism/source_movement/mixin/MouseMixin	Lnet/minecraft/client/MinecraftClient;	client	field_1779
-FIELD	edu/jorbonism/source_movement/mixin/PlayerEntityMixin	Lnet/minecraft/entity/player/PlayerAbilities;	abilities	field_7503
-METHOD	edu/jorbonism/source_movement/mixin/PlayerEntityMixin	(Lnet/minecraft/util/Identifier;)V	incrementStat	method_7281
-METHOD	edu/jorbonism/source_movement/mixin/PlayerEntityMixin	(F)V	addExhaustion	method_7322
-METHOD	edu/jorbonism/source_movement/mixin/PlayerEntityMixin	(DDD)V	increaseTravelMotionStats	method_7282

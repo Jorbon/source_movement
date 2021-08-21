@@ -1,6 +1,5 @@
 package edu.jorbonism.source_movement;
 
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 public class VelocityActionStep {
@@ -36,7 +35,7 @@ public class VelocityActionStep {
 			case 2: return new Vec3d(v.x * this.value, v.y, v.z * this.value);
 			case 3:
 				if (v.x < 1E-4 && v.z < 1E-4) return v;
-				m = MathHelper.sqrt(v.x * v.x + v.z * v.z);
+				m = Math.sqrt(v.x * v.x + v.z * v.z);
 				fx = v.x / m;
 				fz = v.z / m;
 				return new Vec3d(v.x + fx * this.value, v.y, v.z + fz * this.value);
