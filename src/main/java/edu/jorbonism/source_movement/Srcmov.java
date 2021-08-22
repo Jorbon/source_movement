@@ -1,6 +1,7 @@
 package edu.jorbonism.source_movement;
 
 import java.io.File;
+import java.nio.file.FileSystems;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -13,18 +14,11 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 
-/* to do list for 0.2.0
-	more inclusive damage control
-	redo fall damage
-	make stuff work on a dedicated server
-	implement elytra & liquids movement
-*/
-
 public class Srcmov implements ClientModInitializer, DedicatedServerModInitializer {
 
 	public static final String MOD_ID = "srcmov";
 	
-	static String configPath = System.getProperty("user.dir") + "\\config\\source_movement.srcmov";
+	static String configPath = FileSystems.getDefault().getPath(System.getProperty("user.dir"), "config", "source_movement.srcmov").toString();
 	static File configFile = new File(configPath);
 
 	public static final HashMap<String,ConfigDouble> configDoubles = new HashMap<String,ConfigDouble>();

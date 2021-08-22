@@ -1,41 +1,41 @@
 {
 	"schemaVersion": 1,
 	"id": "srcmov",
-	"version": "0.2.0-beta",
-  
+	"version": "1.0",
+	
 	"name": "Source Movement",
 	"description": "This is an example description! Tell everyone what your mod is about!",
 	"authors": [
-	  "Jorbonism"
+		"Jorbonism"
 	],
 	"contact": {
-	  "homepage": "https://fabricmc.net/",
-	  "sources": ""
+		"homepage": "https://fabricmc.net/",
+		"sources": ""
 	},
-  
+	
 	"license": "CC0-1.0",
 	"icon": "assets/srcmov/icon.png",
-  
+	
 	"environment": "*",
 	"entrypoints": {
 		"client": [
 			"edu.jorbonism.source_movement.Srcmov"
-		  ],
-		  "server": [
+		],
+		"server": [
 			"edu.jorbonism.source_movement.Srcmov"
-		  ]
+		]
 	},
 	"mixins": [
-	  "srcmov.mixins.json"
+		"srcmov.mixins.json"
 	],
-  
+	
 	"depends": {
-	  "fabricloader": ">=0.11.6",
-	  "fabric": "*",
-	  "minecraft": "1.17.x",
-	  "java": ">=16"
+		"fabricloader": ">=0.11.6",
+		"fabric": "*",
+		"minecraft": "1.17.x",
+		"java": ">=16"
 	},
 	"suggests": {
-	  "another-mod": "*"
+		"another-mod": "*"
 	}
-  }
+}
