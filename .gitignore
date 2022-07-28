@@ -5,6 +5,8 @@ build/classes/
 build/loom-cache/
 build/resources/
 build/tmp/
+build/generated/
+build/devlibs/
 out/
 classes/
 

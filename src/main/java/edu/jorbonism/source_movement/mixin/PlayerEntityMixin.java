@@ -39,7 +39,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 			return;
 
 		FluidState fluidState = this.world.getFluidState(this.getBlockPos());
-		if (this.isFallFlying() || ((this.isTouchingWater() || this.isInLava()) && this.shouldSwimInFluids() && !this.canWalkOnFluid(fluidState.getFluid())))
+		if (this.isFallFlying() || ((this.isTouchingWater() || this.isInLava()) && this.shouldSwimInFluids() && !this.canWalkOnFluid(fluidState)))
 			return;
 		
 		double oldx = this.getX(), oldy = this.getY(), oldz = this.getZ();

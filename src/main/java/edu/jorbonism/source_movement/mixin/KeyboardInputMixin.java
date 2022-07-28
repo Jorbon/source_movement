@@ -14,7 +14,7 @@ public abstract class KeyboardInputMixin extends Input {
 
 	// use the global scroll jump flag to actually cause a jump input
 	@Inject(method = "tick", at = @At("RETURN"))
-	private void doScrollJump(boolean slowDown, CallbackInfo ci) {
+	private void doScrollJump(boolean slowDown, float f, CallbackInfo ci) {
 		if (Srcmov.playerController.enabled && Srcmov.scrollJumpQueuedTemp)
 			this.jumping = true;
 		Srcmov.scrollJumpQueuedTemp = false;
