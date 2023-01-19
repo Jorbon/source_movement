@@ -361,9 +361,9 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	}
 
 	@Shadow private PlayerAbilities abilities;
-	@Shadow private void incrementStat(Identifier jump) {}
-	@Shadow private void addExhaustion(float f) {}
-	@Shadow private void increaseTravelMotionStats(double d, double e, double f) {}
+	@Shadow public void incrementStat(Identifier jump) {}
+	@Shadow public void addExhaustion(float f) {}
+	@Shadow public void increaseTravelMotionStats(double d, double e, double f) {}
 
 }
 
