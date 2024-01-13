@@ -38,7 +38,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		if (!srcmov.enabled)
 			return;
 
-		FluidState fluidState = this.world.getFluidState(this.getBlockPos());
+		FluidState fluidState = this.getWorld().getFluidState(this.getBlockPos());
 		if (this.isFallFlying() || ((this.isTouchingWater() || this.isInLava()) && this.shouldSwimInFluids() && !this.canWalkOnFluid(fluidState)))
 			return;
 		
@@ -47,7 +47,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		this.increaseTravelMotionStats(this.getX() - oldx, this.getY() - oldy, this.getZ() - oldz);
 
 		// lastly we will do all the actions from button presses in the last tick
-		if (this.world.isClient)
+		if (this.getWorld().isClient())
 			this.executeActionQueue();
 
 		ci.cancel();
@@ -57,7 +57,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	@Inject(method = "travel", at = @At("RETURN"))
 	public void modTravelEnd(Vec3d movementInput, CallbackInfo ci) {
 		// lastly we will do all the actions from button presses in the last tick
-		if (this.world.isClient)
+		if (this.getWorld().isClient())
 			this.executeActionQueue();
 	}
 
@@ -88,36 +88,24 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 			this.setFlag(7, false);
 		}
 
-		double blockSlipperiness = this.world.getBlockState(this.getVelocityAffectingPos()).getBlock().getSlipperiness();
+		double blockSlipperiness = this.getWorld().getBlockState(this.getVelocityAffectingPos()).getBlock().getSlipperiness();
 		
 		this.applyFriction(blockSlipperiness);
 
 		// apply movement last so the final value stored is the actual velocity its moving at
 		this.applyInputAcceleration(blockSlipperiness, movementInput);
 
-		this.onGroundPrevious = this.onGround;
+		this.onGroundPrevious = this.isOnGround();
 		// here is where onGround is updated
 		this.move(MovementType.SELF, this.getVelocity());
 
 
-		{ // popping method_29242
-			this.lastLimbDistance = this.limbDistance;
-			double d = this.getX() - this.prevX;
-			double e = this instanceof Flutterer ? this.getY() - this.prevY : 0;
-			double f = this.getZ() - this.prevZ;
-			float g = MathHelper.sqrt((float)(d * d + e * e + f * f)) * 4.0F;
-			if (g > 1.0F) {
-				g = 1.0F;
-			}
-
-			this.limbDistance += (g - this.limbDistance) * 0.4F;
-			this.limbAngle += this.limbDistance;
-		}
+		this.updateLimbs(this instanceof Flutterer);
 	}
 
 	private void applyFriction(double blockSlipperiness) {
 		double frictionFactor;
-		if (this.onGround) {
+		if (this.isOnGround()) {
 			frictionFactor = srcmov.doubles.get("ground friction") * (1 - blockSlipperiness * 0.91);
 			if (!this.onGroundPrevious)
 				frictionFactor *= srcmov.doubles.get("jump friction multiplier");
@@ -130,7 +118,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		double x = velocity.x, y = velocity.y, z = velocity.z;
 
 		// the signature ABH anti-bhop
-		if (srcmov.booleans.get("enable abh") && this.onGround && !this.onGroundPrevious) {
+		if (srcmov.booleans.get("enable abh") && this.isOnGround() && !this.onGroundPrevious) {
 			double horizontalSpeed2 = x * x + z * z;
 			if (horizontalSpeed2 < 1E-8)
 				return;
@@ -182,7 +170,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 
 	public void jumpSrcmov() {
 		if (!srcmov.booleans.get("full speed jumps"))
-			this.applyFriction(this.world.getBlockState(this.getVelocityAffectingPos()).getBlock().getSlipperiness());
+			this.applyFriction(this.getWorld().getBlockState(this.getVelocityAffectingPos()).getBlock().getSlipperiness());
 
 		Vec3d velocity = this.getVelocity();
 		double x = velocity.x, y = velocity.y, z = velocity.z;
@@ -224,7 +212,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 
 	private double getMovementSpeedSrcmov(double blockSlipperiness) {
 		// this has to correct for frictional offsets since I moved things around. I tried moving them back to fix this but it didn't work so idk where this actually comes from. Also apparently ground movement is fine how it is.
-		if (this.onGround)
+		if (this.isOnGround())
 			return srcmov.doubles.get("ground control") * (this.isSprinting() ? 1.3 : 1) * 0.216 / (blockSlipperiness * blockSlipperiness * blockSlipperiness);
 		if (this.abilities.flying)
 			return (1 - srcmov.doubles.get("horizontal fly friction")) * srcmov.doubles.get("fly speed") * (this.isSprinting() ? 2 : 1);
@@ -260,7 +248,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		}
 		
 		// main air strafe code
-		if (srcmov.booleans.get("use source control cap") && !this.onGround && !this.abilities.flying) {
+		if (srcmov.booleans.get("use source control cap") && !this.isOnGround() && !this.abilities.flying) {
 			// if velocity projected onto acceleration is over the speed cap, don't allow the acceleration to occur
 			double multiplier = 1;
 			double inputSpeed = d > 1 ? 1 : Math.sqrt(d);
@@ -318,7 +306,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		if (this.hasStatusEffect(StatusEffects.LEVITATION)) {
 			y += (srcmov.doubles.get("levitation strength") * (double) (this.getStatusEffect(StatusEffects.LEVITATION).getAmplifier() + 1) - y) * 0.2;
 			this.fallDistance = 0;
-		} else if (this.world.isClient && !this.world.isChunkLoaded(this.getVelocityAffectingPos())) {
+		} else if (this.getWorld().isClient() && !this.getWorld().isChunkLoaded(this.getVelocityAffectingPos())) {
 			if (this.getY() > 0)
 				y = -0.1;
 			else
@@ -337,7 +325,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		double x = MathHelper.clamp(velocity.x, -cap, cap);
 		double z = MathHelper.clamp(velocity.z, -cap, cap);
 		double y = Math.max(velocity.y, -cap);
-		if (y < 0 && !this.world.getBlockState(this.getBlockPos()).isOf(Blocks.SCAFFOLDING) && this.isHoldingOntoLadder())
+		if (y < 0 && !this.getWorld().getBlockState(this.getBlockPos()).isOf(Blocks.SCAFFOLDING) && this.isHoldingOntoLadder())
 			y = 0;
 
 		if (this.horizontalCollision || this.jumping)
