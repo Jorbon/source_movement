@@ -1,173 +1,105 @@
 package edu.jorbonism.source_movement;
 
-import java.io.File;
-import java.nio.file.FileSystems;
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import org.lwjgl.glfw.GLFW;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.math.Vec3d;
 
-public class Srcmov implements ClientModInitializer, DedicatedServerModInitializer {
 
-	public static final String MOD_ID = "srcmov";
+
+public class Srcmov implements ClientModInitializer {
 	
-	static String configPath = FileSystems.getDefault().getPath(System.getProperty("user.dir"), "config", "source_movement.srcmov").toString();
-	static File configFile = new File(configPath);
-
-	public static final HashMap<String,ConfigDouble> configDoubles = new HashMap<String,ConfigDouble>();
-	public static final HashMap<String,Boolean> configBooleans = new HashMap<String,Boolean>();
-
-	public static SrcmovPC playerController;
+	// public static final String MOD_ID = "srcmov";
 	
-	public static final double sourceConversionFactor = 0.001233008;
-	public static final double walkSpeedTarget = 0.2157764;
-	public static final double sprintSpeedTarget = walkSpeedTarget * 1.3;
-	public static final double sneakSpeedTarget = walkSpeedTarget * 0.3;
-
-
-	public static boolean scrollJumpQueuedTemp = false;
-
-	private static KeyBinding keySetVanilla;
-	private static KeyBinding keyReloadActions;
-	public static ArrayList<VelocityAction> actions = new ArrayList<VelocityAction>();
-	public static ArrayList<VelocityActionStep> actionQueue = new ArrayList<VelocityActionStep>();
-
-
+	
+	public static final double SRC_TO_MC = 0.001233008;
+	public static final double MC_TO_SRC = 1.0 / SRC_TO_MC;
+	
+	// public static final double VANILLA_WALK_SPEED = 0.2157764;
+	// public static final double VANILLA_SPRINT_SPEED = VANILLA_WALK_SPEED * 1.3;
+	// public static final double VANILLA_SNEAK_SPEED = VANILLA_WALK_SPEED * 0.3;
+	
+	
+	public static boolean enabled = true;
+	public static ConfigState config_state = new ConfigState();
+	
+	public static boolean is_scroll_jump_queued = false;
+	
+	private static KeyBinding key_toggle_srcmov_off;
+	private static KeyBinding key_boost;
+	
+	
 	@Override
 	public void onInitializeClient() {
-
-		initValues();
-
-		playerController = new SrcmovPC();
 		
-		ConfigLoader.initConfig();
-
-		// register the velocity action keys
-		for (int i = actions.size() - 1; i >= 0; i--) {
-			KeyBinding key = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.srcmov.action" + (i+1),
-				InputUtil.Type.KEYSYM,
-				GLFW.GLFW_KEY_UNKNOWN,
-				"category.srcmov.all"
-			));
-			ClientTickEvents.END_CLIENT_TICK.register(client -> {
-				while (key.wasPressed()) {
-					String tr = key.getTranslationKey();
-					// use translation key to determine index
-					// 17 is "key.srcmov.action".length()
-					int index = Integer.parseInt(tr.substring(17)) - 1;
-					if (index < 0 || index >= actions.size()) return;
-					actions.get(index).queue();
-				}
-			});
-		}
-
+		ConfigFileIO.generate_config_file();
+		
 		// register n use-keys in reverse order
-		for (int i = ConfigLoader.getConfigCount() - 1; i >= 0; i--) {
+		for (int i = ConfigFileIO.get_num_configs() - 1; i >= 0; i--) {
 			KeyBinding key = KeyBindingHelper.registerKeyBinding(new KeyBinding(
 				"key.srcmov.useconfig" + (i+1),
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_UNKNOWN,
 				"category.srcmov.all"
 			));
+			
 			ClientTickEvents.END_CLIENT_TICK.register(client -> {
 				if (key.wasPressed()) {
-					Srcmov.playerController.enabled = true;
+					enabled = true;
 					String tr = key.getTranslationKey();
-					// we will get the translation key of the bind to figure out which config to load
-					// 20 is "key.srcmov.useconfig".length()
-					ConfigLoader.loadConfig(Integer.parseInt(tr.substring(20)) - 1);
+					// Use the translation key of the binding to figure out which config to load
+					ConfigFileIO.load_config(Integer.parseInt(tr.substring("key.srcmov.useconfig".length())) - 1);
 				}
 			});
 		}
-
-		// key to reload velocity actions
-		keyReloadActions = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-			"key.srcmov.reloadactions",
+		
+		
+		// disable key
+		key_toggle_srcmov_off = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+			"key.srcmov.disable",
 			InputUtil.Type.KEYSYM,
 			GLFW.GLFW_KEY_UNKNOWN,
 			"category.srcmov.all"
 		));
+		
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			if (keyReloadActions.wasPressed())
-				ConfigLoader.cacheActions();
+			if (key_toggle_srcmov_off.wasPressed()) enabled = false;
 		});
-
-		// now register the big disable key
-		keySetVanilla = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-			"key.srcmov.setvanilla", // The translation key of the keybinding's name
-			InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
-			GLFW.GLFW_KEY_UNKNOWN, // The keycode of the key
-			"category.srcmov.all" // The translation key of the keybinding's category.
+		
+		
+		// boost key
+		key_boost = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+			"key.srcmov.boost",
+			InputUtil.Type.KEYSYM,
+			GLFW.GLFW_KEY_UNKNOWN,
+			"category.srcmov.all"
 		));
+		
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			if (keySetVanilla.wasPressed())
-				Srcmov.playerController.enabled = false;
+			if (!enabled) return;
+			while (key_boost.wasPressed()) {
+				double boost_speed = config_state.get_double(ConfigState.DoubleSetting.BoostSpeed);
+				
+				Vec3d velocity = client.player.getVelocity();
+				double yaw = client.player.getYaw() * 0.017453292;
+				double pitch = client.player.getPitch() * 0.017453292;
+				double fx = -Math.sin(yaw) * Math.cos(pitch);
+				double fz = Math.cos(yaw) * Math.cos(pitch);
+				double fy = -Math.sin(pitch);
+				client.player.setVelocity(velocity.x + fx * boost_speed, velocity.y + fy * boost_speed, velocity.z + fz * boost_speed);
+			}
 		});
 		
 	}
-
-	@Override
-	public void onInitializeServer() {
-		initValues();
-
-		playerController = new SrcmovPC();
-	}
-
-	public static void initValues() {
-		configBooleans.put("directional jump boosting", false);
-		configBooleans.put("orange box jump boosting", false);
-		configBooleans.put("full speed jumps", false);
-		configBooleans.put("scroll jump", false);
-		configBooleans.put("use source control cap", false);
-		configBooleans.put("use source fling detection", false);
-		configBooleans.put("enable abh", false);
-		
-		configDoubles.put("gravity", new ConfigDouble(0.08));
-		configDoubles.put("jump height", new ConfigDouble(1.25, 1.25, 0));
-		configDoubles.put("horizontal air friction", new ConfigDouble(0.09, 0.09, 0, 1));
-		configDoubles.put("vertical air friction", new ConfigDouble(0.02, 0.02, 0, 1));
-		configDoubles.put("sprint jump boost", new ConfigDouble(0.2));
-		configDoubles.put("walk jump boost", new ConfigDouble(0, 0.2));
-		configDoubles.put("ground friction", new ConfigDouble(1));
-		configDoubles.put("air control", new ConfigDouble(0.02));
-		configDoubles.put("ground control", new ConfigDouble(0.1));
-		configDoubles.put("climb speed", new ConfigDouble(0.2));
-		configDoubles.put("climb movement cap", new ConfigDouble(0.15));
-		configDoubles.put("horizontal fly friction", new ConfigDouble(0.09, 0.09, 0, 1));
-		configDoubles.put("fly speed", new ConfigDouble(0.05));
-		configDoubles.put("vertical fly friction", new ConfigDouble(0.4, 0.4, 0, 1));
-		configDoubles.put("levitation strength", new ConfigDouble(0.05));
-		configDoubles.put("source control cap", new ConfigDouble(inMCUnits(60)));
-		configDoubles.put("min fling speed", new ConfigDouble(inMCUnits(300)));
-		configDoubles.put("abh threshold", new ConfigDouble(3.75));
-		configDoubles.put("jump friction multiplier", new ConfigDouble(1));
-
-		configBooleans.put("velocity based fall damage", false);
-		configDoubles.put("fall damage", new ConfigDouble(1, 1, 0));
-		configDoubles.put("sprint jump exhaustion", new ConfigDouble(0.2, 0.2, 0));
-		configDoubles.put("jump exhaustion", new ConfigDouble(0.05, 0.05, 0));
-	}
-
-	public static double inSourceUnits(double mcUnits) {
-		return mcUnits / sourceConversionFactor;
-	}
-
-	public static double inMCUnits(double srcUnits) {
-		return srcUnits * sourceConversionFactor;
-	}
-
-
-
 	
 	
-
-
+	
+	
+	
+	
+	
 }

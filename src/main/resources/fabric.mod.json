@@ -20,9 +20,6 @@
 	"entrypoints": {
 		"client": [
 			"edu.jorbonism.source_movement.Srcmov"
-		],
-		"server": [
-			"edu.jorbonism.source_movement.Srcmov"
 		]
 	},
 	"mixins": [
@@ -32,7 +29,7 @@
 	"depends": {
 		"fabricloader": "*",
 		"fabric": "*",
-		"minecraft": ">=1.20",
+		"minecraft": ">=1.21",
 		"java": "*"
 	}
 }
