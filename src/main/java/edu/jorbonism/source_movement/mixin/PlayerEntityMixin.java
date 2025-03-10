@@ -1,30 +1,12 @@
 package edu.jorbonism.source_movement.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import edu.jorbonism.source_movement.ConfigState;
 import edu.jorbonism.source_movement.Srcmov;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.Flutterer;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MovementType;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.stat.Stats;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 @Mixin(PlayerEntity.class)
@@ -34,31 +16,50 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	
 	protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) { super(entityType, world); }
 	
-	@Override
-	public void jump() {
-		if (!Srcmov.enabled) {
-			super.jump();
-			return;
-		}
+	// @Override
+	// public void jump() {
+	// 	if (!Srcmov.enabled) {
+	// 		super.jump();
+	// 		return;
+	// 	}
 		
-		float jump_velocity = this.getJumpVelocity();
-		if (!(jump_velocity <= 1.0E-5F)) {
-			Vec3d velocity = this.getVelocity();
-			this.setVelocity(velocity.x, Math.max(jump_velocity, velocity.y), velocity.z);
-			if (this.isSprinting()) {
-				float yaw_radians = this.getYaw() * (float) (Math.PI / 180.0);
-				this.addVelocityInternal(new Vec3d(-MathHelper.sin(yaw_radians) * 0.2, 0.0, MathHelper.cos(yaw_radians) * 0.2));
-			}
+	// 	float jump_velocity = this.getJumpVelocity();
+	// 	if (!(jump_velocity <= 1.0E-5F)) {
+	// 		Vec3d velocity = this.getVelocity();
+	// 		this.setVelocity(velocity.x, Math.max(jump_velocity, velocity.y), velocity.z);
+	// 		if (this.isSprinting()) {
+	// 			float yaw_radians = this.getYaw() * (float) (Math.PI / 180.0);
+	// 			this.addVelocityInternal(new Vec3d(-MathHelper.sin(yaw_radians) * 0.2, 0.0, MathHelper.cos(yaw_radians) * 0.2));
+	// 		}
 			
-			this.velocityDirty = true;
-		}
-	}
+	// 		this.velocityDirty = true;
+	// 	}
+	// }
 	
 	@Override
 	protected float getJumpVelocity(float strength) {
 		if (!Srcmov.enabled) return super.getJumpVelocity(strength);
 		return (float) Srcmov.config_state.get_double(ConfigState.DoubleSetting.JumpPower) * strength * this.getJumpVelocityMultiplier() + this.getJumpBoostVelocityModifier();
 	}
+	
+	
+	@Override
+	protected double getGravity() {
+		return Srcmov.config_state.get_double(ConfigState.DoubleSetting.Gravity);
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
