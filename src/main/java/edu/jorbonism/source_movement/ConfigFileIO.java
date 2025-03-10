@@ -21,7 +21,7 @@ public class ConfigFileIO {
 			reader.close();
 			return data;
 		} catch (FileNotFoundException e) {
-			System.out.println(e);
+			System.err.println(e);
 			return "";
 		}
 	}
@@ -49,7 +49,7 @@ public class ConfigFileIO {
 			writer.close();
 			
 		} catch (IOException e) {
-			System.out.println(e);
+			System.err.println(e);
 		}
 	}
 	
@@ -83,25 +83,23 @@ public class ConfigFileIO {
 					case 'y':
 					case 'Y':
 						set_boolean(name, true);
-						return;
+						continue;
 					case 'f':
 					case 'F':
 					case 'n':
 					case 'N':
 						set_boolean(name, false);
-						return;
+						continue;
 					case 'x':
 						set_double_multiplier(name, Double.parseDouble(value.substring(1)));
-						return;
+						continue;
+					default:
+						if (value.charAt(value.length() - 1) == 'x') {
+							set_double_multiplier(name, Double.parseDouble(value.substring(0, value.length() - 1)));
+						} else {
+							set_double(name, Double.parseDouble(value));
+						}
 				}
-				
-				if (value.charAt(value.length() - 1) == 'x') {
-					set_double_multiplier(name, Double.parseDouble(value.substring(0, value.length() - 1)));
-				} else {
-					set_double(name, Double.parseDouble(value));
-				}
-				
-				
 			}
 		}
 	}
@@ -118,7 +116,7 @@ public class ConfigFileIO {
 	public static void set_double(String name, double value) {
 		ConfigState.DoubleSetting key = ConfigState.DOUBLE_LOOKUP.get(name);
 		if (key == null) {
-			System.out.println("Source Movement config error: the value \"" + key + "\" doesn't exist or is not a number");
+			System.out.println("Source Movement config error: the value \"" + name + "\" doesn't exist or is not a number");
 		} else {
 			Srcmov.config_state.set_double(key, value);
 		}
@@ -127,7 +125,7 @@ public class ConfigFileIO {
 	public static void set_double_multiplier(String name, double multiplier) {
 		ConfigState.DoubleSetting key = ConfigState.DOUBLE_LOOKUP.get(name);
 		if (key == null) {
-			System.out.println("Source Movement config error: the value \"" + key + "\" doesn't exist or is not a number");
+			System.out.println("Source Movement config error: the value \"" + name + "\" doesn't exist or is not a number");
 		} else {
 			Srcmov.config_state.set_double(key, multiplier * ConfigState.DOUBLE_DEFAULTS.get(key));
 		}

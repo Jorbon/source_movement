@@ -49,7 +49,7 @@ public class Srcmov implements ClientModInitializer {
 			
 			ClientTickEvents.END_CLIENT_TICK.register(client -> {
 				if (key.wasPressed()) {
-					enabled = true;
+					Srcmov.enabled = true;
 					String tr = key.getTranslationKey();
 					// Use the translation key of the binding to figure out which config to load
 					ConfigFileIO.load_config(Integer.parseInt(tr.substring("key.srcmov.useconfig".length())) - 1);
@@ -67,7 +67,9 @@ public class Srcmov implements ClientModInitializer {
 		));
 		
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			if (key_toggle_srcmov_off.wasPressed()) enabled = false;
+			if (key_toggle_srcmov_off.wasPressed()) {
+				Srcmov.enabled = false;
+			}
 		});
 		
 		
@@ -80,17 +82,16 @@ public class Srcmov implements ClientModInitializer {
 		));
 		
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			if (!enabled) return;
+			if (!Srcmov.enabled) return;
 			while (key_boost.wasPressed()) {
 				double boost_speed = config_state.get_double(ConfigState.DoubleSetting.BoostSpeed);
 				
-				Vec3d velocity = client.player.getVelocity();
 				double yaw = client.player.getYaw() * 0.017453292;
 				double pitch = client.player.getPitch() * 0.017453292;
 				double fx = -Math.sin(yaw) * Math.cos(pitch);
 				double fz = Math.cos(yaw) * Math.cos(pitch);
 				double fy = -Math.sin(pitch);
-				client.player.setVelocity(velocity.x + fx * boost_speed, velocity.y + fy * boost_speed, velocity.z + fz * boost_speed);
+				client.player.addVelocity(new Vec3d(fx * boost_speed, fy * boost_speed, fz * boost_speed));
 			}
 		});
 		

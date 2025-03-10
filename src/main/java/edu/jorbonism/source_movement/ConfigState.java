@@ -24,31 +24,31 @@ public class ConfigState {
 	
 	public enum DoubleSetting {
 		Gravity,
-		JumpHeight,
+		JumpPower,
 		BoostSpeed,
 	}
 	
 	public static final Map<String, DoubleSetting> DOUBLE_LOOKUP = Map.ofEntries(
 		Map.entry("gravity", DoubleSetting.Gravity),
-		Map.entry("jump_height", DoubleSetting.JumpHeight),
+		Map.entry("jump_power", DoubleSetting.JumpPower),
 		Map.entry("boost_speed", DoubleSetting.BoostSpeed)
 	);
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_DEFAULTS = Map.ofEntries(
 		Map.entry(DoubleSetting.Gravity, 0.08),
-		Map.entry(DoubleSetting.JumpHeight, 1.25),
+		Map.entry(DoubleSetting.JumpPower, 0.42),
 		Map.entry(DoubleSetting.BoostSpeed, 0.0)
 	);
 	
 	public static final Map<DoubleSetting, Optional<Double>> DOUBLE_MINS = Map.ofEntries(
 		Map.entry(DoubleSetting.Gravity, Optional.empty()),
-		Map.entry(DoubleSetting.JumpHeight, Optional.of(0.0)),
+		Map.entry(DoubleSetting.JumpPower, Optional.of(0.0)),
 		Map.entry(DoubleSetting.BoostSpeed, Optional.empty())
 	);
 	
 	public static final Map<DoubleSetting, Optional<Double>> DOUBLE_MAXES = Map.ofEntries(
 		Map.entry(DoubleSetting.Gravity, Optional.empty()),
-		Map.entry(DoubleSetting.JumpHeight, Optional.empty()),
+		Map.entry(DoubleSetting.JumpPower, Optional.empty()),
 		Map.entry(DoubleSetting.BoostSpeed, Optional.empty())
 	);
 	
