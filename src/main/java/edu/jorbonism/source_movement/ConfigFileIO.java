@@ -127,7 +127,9 @@ public class ConfigFileIO {
 		if (key == null) {
 			System.out.println("Source Movement config error: the value \"" + name + "\" doesn't exist or is not a number");
 		} else {
-			Srcmov.config_state.set_double(key, multiplier * ConfigState.DOUBLE_DEFAULTS.get(key));
+			Double base_multiple_value = ConfigState.DOUBLE_BASE_MULTIPLE.get(key);
+			if (base_multiple_value == null || base_multiple_value == 0.0) base_multiple_value = ConfigState.DOUBLE_DEFAULTS.get(key);
+			Srcmov.config_state.set_double(key, multiplier * base_multiple_value);
 		}
 	}
 	

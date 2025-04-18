@@ -2,22 +2,23 @@ package edu.jorbonism.source_movement;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class ConfigState {
 	
 	
 	public enum BooleanSetting {
 		ScrollJumping,
-		
+		DirectionalJumpBoosting,
 	}
 	
 	public static final Map<String, BooleanSetting> BOOLEAN_LOOKUP = Map.ofEntries(
-		Map.entry("scroll_jumping", BooleanSetting.ScrollJumping)
+		Map.entry("scroll_jumping", BooleanSetting.ScrollJumping),
+		Map.entry("directional_jump_boosting", BooleanSetting.DirectionalJumpBoosting)
 	);
 	
 	public static final Map<BooleanSetting, Boolean> BOOLEAN_DEFAULTS = Map.ofEntries(
-		Map.entry(BooleanSetting.ScrollJumping, false)
+		Map.entry(BooleanSetting.ScrollJumping, false),
+		Map.entry(BooleanSetting.DirectionalJumpBoosting, false)
 	);
 	
 	
@@ -26,30 +27,37 @@ public class ConfigState {
 		Gravity,
 		JumpPower,
 		BoostSpeed,
+		JumpBoostSprintSpeed,
+		JumpBoostWalkSpeed,
+		JumpingCooldown,
 	}
 	
 	public static final Map<String, DoubleSetting> DOUBLE_LOOKUP = Map.ofEntries(
 		Map.entry("gravity", DoubleSetting.Gravity),
 		Map.entry("jump_power", DoubleSetting.JumpPower),
-		Map.entry("boost_speed", DoubleSetting.BoostSpeed)
+		Map.entry("boost_speed", DoubleSetting.BoostSpeed),
+		Map.entry("jump_boost_sprint_speed", DoubleSetting.JumpBoostSprintSpeed),
+		Map.entry("jump_boost_walk_speed", DoubleSetting.JumpBoostWalkSpeed),
+		Map.entry("jumping_cooldown", DoubleSetting.JumpingCooldown)
 	);
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_DEFAULTS = Map.ofEntries(
 		Map.entry(DoubleSetting.Gravity, 0.08),
 		Map.entry(DoubleSetting.JumpPower, 0.42),
-		Map.entry(DoubleSetting.BoostSpeed, 0.0)
+		Map.entry(DoubleSetting.BoostSpeed, 0.0),
+		Map.entry(DoubleSetting.JumpBoostSprintSpeed, 0.2),
+		Map.entry(DoubleSetting.JumpBoostWalkSpeed, 0.0)
 	);
 	
-	public static final Map<DoubleSetting, Optional<Double>> DOUBLE_MINS = Map.ofEntries(
-		Map.entry(DoubleSetting.Gravity, Optional.empty()),
-		Map.entry(DoubleSetting.JumpPower, Optional.of(0.0)),
-		Map.entry(DoubleSetting.BoostSpeed, Optional.empty())
+	public static final Map<DoubleSetting, Double> DOUBLE_MINS = Map.ofEntries(
+		Map.entry(DoubleSetting.JumpPower, 0.0)
 	);
 	
-	public static final Map<DoubleSetting, Optional<Double>> DOUBLE_MAXES = Map.ofEntries(
-		Map.entry(DoubleSetting.Gravity, Optional.empty()),
-		Map.entry(DoubleSetting.JumpPower, Optional.empty()),
-		Map.entry(DoubleSetting.BoostSpeed, Optional.empty())
+	public static final Map<DoubleSetting, Double> DOUBLE_MAXES = Map.of();
+	
+	public static final Map<DoubleSetting, Double> DOUBLE_BASE_MULTIPLE = Map.ofEntries(
+		Map.entry(DoubleSetting.BoostSpeed, 1.0),
+		Map.entry(DoubleSetting.JumpBoostWalkSpeed, 0.2)
 	);
 	
 	
@@ -79,13 +87,13 @@ public class ConfigState {
 	}
 	
 	public void set_double(DoubleSetting key, double value) {
-		Optional<Double> min = DOUBLE_MINS.get(key);
-		Optional<Double> max = DOUBLE_MAXES.get(key);
+		Double min = DOUBLE_MINS.get(key);
+		Double max = DOUBLE_MAXES.get(key);
 		
-		if (min.isPresent() && value < min.get()) {
-			double_values.put(key, min.get());
-		} else if (max.isPresent() && value > max.get()) {
-			double_values.put(key, max.get());
+		if (min != null && value < min) {
+			double_values.put(key, min);
+		} else if (max != null && value > max) {
+			double_values.put(key, max);
 		} else {
 			double_values.put(key, value);
 		}
@@ -98,17 +106,13 @@ public class ConfigState {
 // configBooleans.put("directional jump boosting", false);
 // configBooleans.put("orange box jump boosting", false);
 // configBooleans.put("full speed jumps", false);
-// configBooleans.put("scroll jump", false);
 // configBooleans.put("use source control cap", false);
 // configBooleans.put("use source fling detection", false);
 // configBooleans.put("enable abh", false);
 
-// configDoubles.put("gravity", new ConfigDouble(0.08));
-// configDoubles.put("jump height", new ConfigDouble(1.25, 1.25, 0));
 // configDoubles.put("horizontal air friction", new ConfigDouble(0.09, 0.09, 0, 1));
 // configDoubles.put("vertical air friction", new ConfigDouble(0.02, 0.02, 0, 1));
-// configDoubles.put("sprint jump boost", new ConfigDouble(0.2));
-// configDoubles.put("walk jump boost", new ConfigDouble(0, 0.2));
+
 // configDoubles.put("ground friction", new ConfigDouble(1));
 // configDoubles.put("air control", new ConfigDouble(0.02));
 // configDoubles.put("ground control", new ConfigDouble(0.1));

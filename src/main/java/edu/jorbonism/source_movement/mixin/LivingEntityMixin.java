@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import edu.jorbonism.source_movement.ConfigState.DoubleSetting;
 import edu.jorbonism.source_movement.Srcmov;
 import net.minecraft.entity.Attackable;
 import net.minecraft.entity.Entity;
@@ -33,36 +34,39 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	protected LivingEntityMixin(EntityType<? extends LivingEntity> entityType, World world) { super(entityType, world); }
 	
 	
+	@SuppressWarnings("deprecation")
 	@Inject(method = "travelMidAir", at = @At("HEAD"), cancellable = true)
-	private void travelMidAirMixin(Vec3d movementInput, CallbackInfo ci) {
+	private void travelMidAirMixin(Vec3d movement_input, CallbackInfo ci) {
 		if (!Srcmov.enabled) return;
 		if (!(((Entity) this) instanceof PlayerEntity)) return;
 		
-		BlockPos blockPos = this.getVelocityAffectingPos();
-		float f = this.isOnGround() ? this.getWorld().getBlockState(blockPos).getBlock().getSlipperiness() : 1.0F;
-		float g = f * 0.91F;
-		Vec3d vec3d = this.applyMovementInput(movementInput, f);
-		double d = vec3d.y;
-		StatusEffectInstance statusEffectInstance = this.getStatusEffect(StatusEffects.LEVITATION);
-		if (statusEffectInstance != null) {
-			d += (0.05 * (statusEffectInstance.getAmplifier() + 1) - vec3d.y) * 0.2;
-		} else if (!this.getWorld().isClient || this.getWorld().isChunkLoaded(blockPos)) {
-			d -= this.getEffectiveGravity();
+		BlockPos block_pos = this.getVelocityAffectingPos();
+		float slipperiness = this.isOnGround() ? this.getWorld().getBlockState(block_pos).getBlock().getSlipperiness() : 1.0F;
+		Vec3d vec3d = this.applyMovementInput(movement_input, slipperiness);
+		double movement_y = vec3d.y;
+		StatusEffectInstance levitation = this.getStatusEffect(StatusEffects.LEVITATION);
+		if (levitation != null) {
+			movement_y += (0.05 * (levitation.getAmplifier() + 1) - vec3d.y) * 0.2;
+		} else if (!this.getWorld().isClient || this.getWorld().isChunkLoaded(block_pos)) {
+			movement_y -= this.getEffectiveGravity();
 		} else if (this.getY() > this.getWorld().getBottomY()) {
-			d = -0.1;
+			movement_y = -0.1;
 		} else {
-			d = 0.0;
+			movement_y = 0.0;
 		}
 
 		if (this.hasNoDrag()) {
-			this.setVelocity(vec3d.x, d, vec3d.z);
+			this.setVelocity(vec3d.x, movement_y, vec3d.z);
 		} else {
+			float g = slipperiness * 0.91F;
 			float h = this instanceof Flutterer ? g : 0.98F;
-			this.setVelocity(vec3d.x * g, d * h, vec3d.z * g);
+			this.setVelocity(vec3d.x * g, movement_y * h, vec3d.z * g);
 		}
 		
 		ci.cancel();
 	}
+	
+	
 	
 	
 	@Inject(method = "travelInFluid", at = @At("HEAD"), cancellable = true)
@@ -76,27 +80,27 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 		if (this.isTouchingWater()) {
 			float f = this.isSprinting() ? 0.9F : this.getBaseWaterMovementSpeedMultiplier();
 			float g = 0.02F;
-			float h = (float)this.getAttributeValue(EntityAttributes.WATER_MOVEMENT_EFFICIENCY);
+			float h = (float) this.getAttributeValue(EntityAttributes.WATER_MOVEMENT_EFFICIENCY);
 			if (!this.isOnGround()) {
 				h *= 0.5F;
 			}
-
+			
 			if (h > 0.0F) {
 				f += (0.54600006F - f) * h;
 				g += (this.getMovementSpeed() - g) * h;
 			}
-
+			
 			if (this.hasStatusEffect(StatusEffects.DOLPHINS_GRACE)) {
 				f = 0.96F;
 			}
-
+			
 			this.updateVelocity(g, movementInput);
 			this.move(MovementType.SELF, this.getVelocity());
 			Vec3d vec3d = this.getVelocity();
 			if (this.horizontalCollision && this.isClimbing()) {
 				vec3d = new Vec3d(vec3d.x, 0.2, vec3d.z);
 			}
-
+			
 			vec3d = vec3d.multiply(f, 0.8F, f);
 			this.setVelocity(this.applyFluidMovingSpeed(e, bl, vec3d));
 		} else {
@@ -109,12 +113,12 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 			} else {
 				this.setVelocity(this.getVelocity().multiply(0.5));
 			}
-
+			
 			if (e != 0.0) {
 				this.setVelocity(this.getVelocity().add(0.0, -e / 4.0, 0.0));
 			}
 		}
-
+		
 		Vec3d vec3d2 = this.getVelocity();
 		if (this.horizontalCollision && this.doesNotCollide(vec3d2.x, vec3d2.y + 0.6F - this.getY() + d, vec3d2.z)) {
 			this.setVelocity(vec3d2.x, 0.3F, vec3d2.z);
@@ -155,15 +159,18 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	}
 	
 	
-	@Shadow private Vec3d applyMovementInput(Vec3d movementInput, float slipperiness) { return Vec3d.ZERO; }
-	@Shadow public StatusEffectInstance getStatusEffect(RegistryEntry<StatusEffect> effect) { return null; }
-	@Shadow protected double getEffectiveGravity() { return 0.0; }
-	@Shadow public boolean hasNoDrag() { return false; }
-	@Shadow protected float getBaseWaterMovementSpeedMultiplier() { return 0.8f; }
-	@Shadow public double getAttributeValue(RegistryEntry<EntityAttribute> attribute) { return 0.0; }
-	@Shadow private float getMovementSpeed() { return 0.0f; }
-	@Shadow public boolean hasStatusEffect(RegistryEntry<StatusEffect> effect) { return false; }
-	@Shadow public boolean isClimbing() { return false; }
-	@Shadow public Vec3d applyFluidMovingSpeed(double gravity, boolean falling, Vec3d motion) { return Vec3d.ZERO; }
+	
+	
+	@Shadow public abstract boolean hasNoDrag();
+	@Shadow private Vec3d applyMovementInput(Vec3d movement_input, float slipperiness) { return Vec3d.ZERO; };
+	@Shadow public abstract StatusEffectInstance getStatusEffect(RegistryEntry<StatusEffect> levitation);
+	@Shadow protected abstract float getBaseWaterMovementSpeedMultiplier();
+	@Shadow public abstract double getAttributeValue(RegistryEntry<EntityAttribute> waterMovementEfficiency);
+	@Shadow public abstract float getMovementSpeed();
+	@Shadow public abstract boolean hasStatusEffect(RegistryEntry<StatusEffect> dolphinsGrace);
+	@Shadow public abstract boolean isClimbing();
+	@Shadow public abstract Vec3d applyFluidMovingSpeed(double e, boolean bl, Vec3d vec3d);
+	@Shadow protected abstract double getEffectiveGravity();
+	
 	
 }

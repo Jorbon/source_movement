@@ -7,6 +7,8 @@ import edu.jorbonism.source_movement.Srcmov;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 @Mixin(PlayerEntity.class)
@@ -16,25 +18,37 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	
 	protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) { super(entityType, world); }
 	
-	// @Override
-	// public void jump() {
-	// 	if (!Srcmov.enabled) {
-	// 		super.jump();
-	// 		return;
-	// 	}
+	
+	@Override
+	public void jump() {
+		if (!Srcmov.enabled) {
+			super.jump();
+			return;
+		}
 		
-	// 	float jump_velocity = this.getJumpVelocity();
-	// 	if (!(jump_velocity <= 1.0E-5F)) {
-	// 		Vec3d velocity = this.getVelocity();
-	// 		this.setVelocity(velocity.x, Math.max(jump_velocity, velocity.y), velocity.z);
-	// 		if (this.isSprinting()) {
-	// 			float yaw_radians = this.getYaw() * (float) (Math.PI / 180.0);
-	// 			this.addVelocityInternal(new Vec3d(-MathHelper.sin(yaw_radians) * 0.2, 0.0, MathHelper.cos(yaw_radians) * 0.2));
-	// 		}
+		float jump_velocity = this.getJumpVelocity();
+		if (!(jump_velocity <= 1.0E-5F)) {
 			
-	// 		this.velocityDirty = true;
-	// 	}
-	// }
+			float boost = 0.0f;
+			if (this.isSprinting()) {
+				boost = (float) Srcmov.config_state.get_double(ConfigState.DoubleSetting.JumpBoostSprintSpeed);
+			} else if (!this.isSneaking() && (Math.abs(this.forwardSpeed) > 1e-7 || Math.abs(this.sidewaysSpeed) > 1e-7)) {
+				boost = (float) Srcmov.config_state.get_double(ConfigState.DoubleSetting.JumpBoostWalkSpeed);
+			}
+			
+			float yaw_radians = this.getYaw() * (float) (Math.PI / 180.0);
+			if (Srcmov.config_state.get_boolean(ConfigState.BooleanSetting.DirectionalJumpBoosting)) {
+				     if ( this.sidewaysSpeed > this.forwardSpeed &&  this.sidewaysSpeed > -this.forwardSpeed) yaw_radians -= Math.PI * 0.5;
+				else if (-this.sidewaysSpeed > this.forwardSpeed && -this.sidewaysSpeed > -this.forwardSpeed) yaw_radians += Math.PI * 0.5;
+				else if (this.forwardSpeed < 0.0) yaw_radians += Math.PI;
+			}
+			
+			Vec3d velocity = this.getVelocity();
+			this.setVelocity(velocity.x - MathHelper.sin(yaw_radians) * boost, Math.max(jump_velocity, velocity.y), velocity.z + MathHelper.cos(yaw_radians) * boost);
+			
+			this.velocityDirty = true;
+		}
+	}
 	
 	@Override
 	protected float getJumpVelocity(float strength) {
@@ -81,40 +95,6 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	// 		this.executeActionQueue();
 		
 	// 	ci.cancel();
-	// }
-	
-	// // this is so that actions still work if movement settings are disabled
-	// @Inject(method = "travel", at = @At("RETURN"))
-	// public void modTravelEnd(Vec3d movementInput, CallbackInfo ci) {
-	// 	// lastly we will do all the actions from button presses in the last tick
-	// 	if (this.getWorld().isClient())
-	// 		this.executeActionQueue();
-	// }
-	
-	
-	// private void travelMidAir(Vec3d movementInput) {
-	// 	BlockPos blockPos = this.getVelocityAffectingPos();
-	// 	float slipperiness = this.isOnGround() ? this.getWorld().getBlockState(blockPos).getBlock().getSlipperiness() : 1.0F;
-	// 	float g = slipperiness * 0.91F;
-	// 	Vec3d vec3d = this.applyMovementInput(movementInput, slipperiness);
-	// 	double d = vec3d.y;
-	// 	StatusEffectInstance statusEffectInstance = this.getStatusEffect(StatusEffects.LEVITATION);
-	// 	if (statusEffectInstance != null) {
-	// 		d += (0.05 * (statusEffectInstance.getAmplifier() + 1) - vec3d.y) * 0.2;
-	// 	} else if (!this.getWorld().isClient || this.getWorld().isChunkLoaded(blockPos)) {
-	// 		d -= this.getEffectiveGravity();
-	// 	} else if (this.getY() > this.getWorld().getBottomY()) {
-	// 		d = -0.1;
-	// 	} else {
-	// 		d = 0.0;
-	// 	}
-
-	// 	if (this.hasNoDrag()) {
-	// 		this.setVelocity(vec3d.x, d, vec3d.z);
-	// 	} else {
-	// 		float h = this instanceof Flutterer ? g : 0.98F;
-	// 		this.setVelocity(vec3d.x * g, d * h, vec3d.z * g);
-	// 	}
 	// }
 	
 	
