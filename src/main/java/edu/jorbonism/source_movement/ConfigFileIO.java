@@ -8,6 +8,8 @@ import java.nio.file.FileSystems;
 import java.util.Map;
 import java.util.Scanner;
 
+import edu.jorbonism.source_movement.ConfigState.DoubleSetting;
+
 public class ConfigFileIO {
 	
 	static String config_path = FileSystems.getDefault().getPath(System.getProperty("user.dir"), "config", "source_movement.txt").toString();

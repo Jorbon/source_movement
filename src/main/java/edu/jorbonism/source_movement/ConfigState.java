@@ -8,17 +8,17 @@ public class ConfigState {
 	
 	public enum BooleanSetting {
 		ScrollJumping,
-		DirectionalJumpBoosting,
+		JumpBoostDirectionally,
 	}
 	
 	public static final Map<String, BooleanSetting> BOOLEAN_LOOKUP = Map.ofEntries(
 		Map.entry("scroll_jumping", BooleanSetting.ScrollJumping),
-		Map.entry("directional_jump_boosting", BooleanSetting.DirectionalJumpBoosting)
+		Map.entry("jump_boost_directionally", BooleanSetting.JumpBoostDirectionally)
 	);
 	
 	public static final Map<BooleanSetting, Boolean> BOOLEAN_DEFAULTS = Map.ofEntries(
 		Map.entry(BooleanSetting.ScrollJumping, false),
-		Map.entry(BooleanSetting.DirectionalJumpBoosting, false)
+		Map.entry(BooleanSetting.JumpBoostDirectionally, false)
 	);
 	
 	
@@ -29,7 +29,20 @@ public class ConfigState {
 		BoostSpeed,
 		JumpBoostSprintSpeed,
 		JumpBoostWalkSpeed,
-		JumpingCooldown,
+		
+		ClimbSpeed,
+		ClimbMaxFallingSpeed,
+		ClimbMaxHorizontalSpeed,
+		
+		ElytraGravityMultiplier,
+		ElytraGravityModifier,
+		ElytraOutwardLift,
+		ElytraOutwardForce,
+		ElytraUpwardLift,
+		ElytraUpwardDrag,
+		ElytraRedirection,
+		ElytraHorizontalDrag,
+		ElytraVerticalDrag
 	}
 	
 	public static final Map<String, DoubleSetting> DOUBLE_LOOKUP = Map.ofEntries(
@@ -38,7 +51,20 @@ public class ConfigState {
 		Map.entry("boost_speed", DoubleSetting.BoostSpeed),
 		Map.entry("jump_boost_sprint_speed", DoubleSetting.JumpBoostSprintSpeed),
 		Map.entry("jump_boost_walk_speed", DoubleSetting.JumpBoostWalkSpeed),
-		Map.entry("jumping_cooldown", DoubleSetting.JumpingCooldown)
+		
+		Map.entry("climb_speed", DoubleSetting.ClimbSpeed),
+		Map.entry("climb_max_falling_speed", DoubleSetting.ClimbMaxFallingSpeed),
+		Map.entry("climb_max_horizontal_speed", DoubleSetting.ClimbMaxHorizontalSpeed),
+		
+		Map.entry("elytra_gravity_multiplier", DoubleSetting.ElytraGravityMultiplier),
+		Map.entry("elytra_gravity_modifier", DoubleSetting.ElytraGravityModifier),
+		Map.entry("elytra_outward_lift", DoubleSetting.ElytraOutwardLift),
+		Map.entry("elytra_outward_force", DoubleSetting.ElytraOutwardForce),
+		Map.entry("elytra_upward_lift", DoubleSetting.ElytraUpwardLift),
+		Map.entry("elytra_upward_drag", DoubleSetting.ElytraUpwardDrag),
+		Map.entry("elytra_redirection", DoubleSetting.ElytraRedirection),
+		Map.entry("elytra_horizontal_drag", DoubleSetting.ElytraHorizontalDrag),
+		Map.entry("elytra_vertical_drag", DoubleSetting.ElytraVerticalDrag)
 	);
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_DEFAULTS = Map.ofEntries(
@@ -46,14 +72,38 @@ public class ConfigState {
 		Map.entry(DoubleSetting.JumpPower, 0.42),
 		Map.entry(DoubleSetting.BoostSpeed, 0.0),
 		Map.entry(DoubleSetting.JumpBoostSprintSpeed, 0.2),
-		Map.entry(DoubleSetting.JumpBoostWalkSpeed, 0.0)
+		Map.entry(DoubleSetting.JumpBoostWalkSpeed, 0.0),
+		
+		Map.entry(DoubleSetting.ClimbSpeed, 0.2),
+		Map.entry(DoubleSetting.ClimbMaxFallingSpeed, 0.15),
+		Map.entry(DoubleSetting.ClimbMaxHorizontalSpeed, 0.15),
+		
+		Map.entry(DoubleSetting.ElytraGravityMultiplier, 1.0),
+		Map.entry(DoubleSetting.ElytraGravityModifier, 0.25),
+		Map.entry(DoubleSetting.ElytraOutwardLift, 0.1),
+		Map.entry(DoubleSetting.ElytraOutwardForce, 0.1),
+		Map.entry(DoubleSetting.ElytraUpwardLift, 0.128),
+		Map.entry(DoubleSetting.ElytraUpwardDrag, 0.04),
+		Map.entry(DoubleSetting.ElytraRedirection, 0.1),
+		Map.entry(DoubleSetting.ElytraHorizontalDrag, 0.01),
+		Map.entry(DoubleSetting.ElytraVerticalDrag, 0.02)
 	);
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_MINS = Map.ofEntries(
-		Map.entry(DoubleSetting.JumpPower, 0.0)
+		Map.entry(DoubleSetting.JumpPower, 0.0),
+		Map.entry(DoubleSetting.ClimbSpeed, 0.0),
+		Map.entry(DoubleSetting.ClimbMaxFallingSpeed, 0.0),
+		Map.entry(DoubleSetting.ClimbMaxHorizontalSpeed, 0.0),
+		Map.entry(DoubleSetting.ElytraRedirection, 0.0),
+		Map.entry(DoubleSetting.ElytraHorizontalDrag, 0.0),
+		Map.entry(DoubleSetting.ElytraVerticalDrag, 0.0)
 	);
 	
-	public static final Map<DoubleSetting, Double> DOUBLE_MAXES = Map.of();
+	public static final Map<DoubleSetting, Double> DOUBLE_MAXES = Map.ofEntries(
+		Map.entry(DoubleSetting.ElytraRedirection, 1.0),
+		Map.entry(DoubleSetting.ElytraHorizontalDrag, 1.0),
+		Map.entry(DoubleSetting.ElytraVerticalDrag, 1.0)
+	);
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_BASE_MULTIPLE = Map.ofEntries(
 		Map.entry(DoubleSetting.BoostSpeed, 1.0),

@@ -1,11 +1,18 @@
 package edu.jorbonism.source_movement.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import edu.jorbonism.source_movement.ConfigState;
+import edu.jorbonism.source_movement.ConfigState.DoubleSetting;
 import edu.jorbonism.source_movement.Srcmov;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -29,6 +36,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		float jump_velocity = this.getJumpVelocity();
 		if (!(jump_velocity <= 1.0E-5F)) {
 			
+			// Choose boost amount
 			float boost = 0.0f;
 			if (this.isSprinting()) {
 				boost = (float) Srcmov.config_state.get_double(ConfigState.DoubleSetting.JumpBoostSprintSpeed);
@@ -36,8 +44,9 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 				boost = (float) Srcmov.config_state.get_double(ConfigState.DoubleSetting.JumpBoostWalkSpeed);
 			}
 			
+			// Choose boost direction
 			float yaw_radians = this.getYaw() * (float) (Math.PI / 180.0);
-			if (Srcmov.config_state.get_boolean(ConfigState.BooleanSetting.DirectionalJumpBoosting)) {
+			if (Srcmov.config_state.get_boolean(ConfigState.BooleanSetting.JumpBoostDirectionally)) {
 				     if ( this.sidewaysSpeed > this.forwardSpeed &&  this.sidewaysSpeed > -this.forwardSpeed) yaw_radians -= Math.PI * 0.5;
 				else if (-this.sidewaysSpeed > this.forwardSpeed && -this.sidewaysSpeed > -this.forwardSpeed) yaw_radians += Math.PI * 0.5;
 				else if (this.forwardSpeed < 0.0) yaw_radians += Math.PI;
@@ -63,10 +72,31 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	}
 	
 	
+	@Inject(method = "getMovementSpeed", at = @At("HEAD"), cancellable = true)
+	public void getMovementSpeedMixin(CallbackInfoReturnable<Float> cir) {
+		if (!Srcmov.enabled) return;
+		cir.setReturnValue((float)this.getAttributeValue(EntityAttributes.MOVEMENT_SPEED));
+    	cir.cancel();
+	}
+	
+	@Inject(method = "getOffGroundSpeed", at = @At("HEAD"), cancellable = true)
+	protected void getOffGroundSpeedMixin(CallbackInfoReturnable<Float> cir) {
+		if (!Srcmov.enabled) return;
+		
+		double speed;
+		if (this.abilities.flying && !this.hasVehicle()) {
+			if (this.isSprinting()) speed = this.abilities.getFlySpeed() * 20.0 * Srcmov.config_state.get_double(DoubleSetting.FlySprintSpeed);//0.1
+	    	else speed = this.abilities.getFlySpeed() * 20.0 * Srcmov.config_state.get_double(DoubleSetting.FlySpeed);//0.05
+		} else if (this.isSprinting()) speed = Srcmov.config_state.get_double(DoubleSetting.SprintSpeed);//0.026
+		else speed = Srcmov.config_state.get_double(DoubleSetting.WalkSpeed);//0.02
+		
+		cir.setReturnValue((float) speed);
+		cir.cancel();
+	}
 	
 	
 	
-	
+	@Shadow private final PlayerAbilities abilities = new PlayerAbilities();
 	
 	
 	
