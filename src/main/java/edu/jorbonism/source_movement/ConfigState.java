@@ -27,6 +27,18 @@ public class ConfigState {
 		Gravity,
 		JumpPower,
 		BoostSpeed,
+		
+		WalkGroundSpeed,
+		SprintGroundSpeed,
+		Traction,
+		Friction,
+		WalkAirSpeed,
+		SprintAirSpeed,
+		FlySpeed,
+		FlySprintSpeed,
+		HorizontalDrag,
+		VerticalDrag,
+		
 		JumpBoostSprintSpeed,
 		JumpBoostWalkSpeed,
 		
@@ -49,6 +61,18 @@ public class ConfigState {
 		Map.entry("gravity", DoubleSetting.Gravity),
 		Map.entry("jump_power", DoubleSetting.JumpPower),
 		Map.entry("boost_speed", DoubleSetting.BoostSpeed),
+		
+		Map.entry("walk_ground_speed", DoubleSetting.WalkGroundSpeed),
+		Map.entry("sprint_ground_speed", DoubleSetting.SprintGroundSpeed),
+		Map.entry("traction", DoubleSetting.Traction),
+		Map.entry("friction", DoubleSetting.Friction),
+		Map.entry("walk_air_speed", DoubleSetting.WalkAirSpeed),
+		Map.entry("sprint_air_speed", DoubleSetting.SprintAirSpeed),
+		Map.entry("fly_speed", DoubleSetting.FlySpeed),
+		Map.entry("fly_sprint_speed", DoubleSetting.FlySprintSpeed),
+		Map.entry("horizontal_drag", DoubleSetting.HorizontalDrag),
+		Map.entry("vertical_drag", DoubleSetting.VerticalDrag),
+		
 		Map.entry("jump_boost_sprint_speed", DoubleSetting.JumpBoostSprintSpeed),
 		Map.entry("jump_boost_walk_speed", DoubleSetting.JumpBoostWalkSpeed),
 		
@@ -71,6 +95,18 @@ public class ConfigState {
 		Map.entry(DoubleSetting.Gravity, 0.08),
 		Map.entry(DoubleSetting.JumpPower, 0.42),
 		Map.entry(DoubleSetting.BoostSpeed, 0.0),
+		
+		Map.entry(DoubleSetting.WalkGroundSpeed, 0.1),
+		Map.entry(DoubleSetting.SprintGroundSpeed, 0.13),
+		Map.entry(DoubleSetting.Traction, 0.216),
+		Map.entry(DoubleSetting.Friction, 1.0),
+		Map.entry(DoubleSetting.WalkAirSpeed, 0.02),
+		Map.entry(DoubleSetting.SprintAirSpeed, 0.026),
+		Map.entry(DoubleSetting.FlySpeed, 0.05),
+		Map.entry(DoubleSetting.FlySprintSpeed, 0.1),
+		Map.entry(DoubleSetting.HorizontalDrag, 0.09),
+		Map.entry(DoubleSetting.VerticalDrag, 0.02),
+		
 		Map.entry(DoubleSetting.JumpBoostSprintSpeed, 0.2),
 		Map.entry(DoubleSetting.JumpBoostWalkSpeed, 0.0),
 		
@@ -91,15 +127,24 @@ public class ConfigState {
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_MINS = Map.ofEntries(
 		Map.entry(DoubleSetting.JumpPower, 0.0),
+		
+		Map.entry(DoubleSetting.Friction, 0.0),
+		Map.entry(DoubleSetting.HorizontalDrag, 0.0),
+		Map.entry(DoubleSetting.VerticalDrag, 0.0),
+		
 		Map.entry(DoubleSetting.ClimbSpeed, 0.0),
 		Map.entry(DoubleSetting.ClimbMaxFallingSpeed, 0.0),
 		Map.entry(DoubleSetting.ClimbMaxHorizontalSpeed, 0.0),
+		
 		Map.entry(DoubleSetting.ElytraRedirection, 0.0),
 		Map.entry(DoubleSetting.ElytraHorizontalDrag, 0.0),
 		Map.entry(DoubleSetting.ElytraVerticalDrag, 0.0)
 	);
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_MAXES = Map.ofEntries(
+		Map.entry(DoubleSetting.HorizontalDrag, 1.0),
+		Map.entry(DoubleSetting.VerticalDrag, 1.0),
+		
 		Map.entry(DoubleSetting.ElytraRedirection, 1.0),
 		Map.entry(DoubleSetting.ElytraHorizontalDrag, 1.0),
 		Map.entry(DoubleSetting.ElytraVerticalDrag, 1.0)

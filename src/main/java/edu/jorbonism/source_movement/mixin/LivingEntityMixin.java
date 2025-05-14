@@ -14,7 +14,6 @@ import net.minecraft.block.PowderSnowBlock;
 import net.minecraft.entity.Attackable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.Flutterer;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MovementType;
 import net.minecraft.entity.attribute.EntityAttribute;
@@ -48,8 +47,8 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 		// Get movement speed
 		double movement_speed;
 		if (this.isOnGround()) 
-			movement_speed = this.getMovementSpeed() * (0.216 / (slipperiness * slipperiness * slipperiness));
-		else movement_speed = 0.02;
+			movement_speed = this.getMovementSpeed() / (slipperiness * slipperiness * slipperiness) * Srcmov.config_state.get_double(DoubleSetting.Traction);
+		else movement_speed = this.getOffGroundSpeed();
 		
 		// Apply movement input
 		this.updateVelocity((float) movement_speed, movement_input);
@@ -92,11 +91,14 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 			vy = 0.0;
 		}
 		
-		double g = slipperiness * (1.0 - 0.09);
-		double vx = velocity.x * g;
-		double vz = velocity.z * g;
+		double friction = Math.clamp(1.0 - (1.0 - slipperiness) * Srcmov.config_state.get_double(DoubleSetting.Friction), 0.0, 1.0);
+		double vx = velocity.x * friction;
+		double vz = velocity.z * friction;
 		
-		vy *= 0.98;
+		vx *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.HorizontalDrag);
+		vz *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.HorizontalDrag);
+		
+		vy *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.VerticalDrag);
 		
 		this.setVelocity(vx, vy, vz);
 		
@@ -225,6 +227,7 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	@Shadow public abstract boolean isClimbing();
 	@Shadow public abstract Vec3d applyFluidMovingSpeed(double e, boolean bl, Vec3d vec3d);
 	@Shadow protected abstract double getEffectiveGravity();
+	@Shadow protected abstract float getOffGroundSpeed();
 	
 	
 }

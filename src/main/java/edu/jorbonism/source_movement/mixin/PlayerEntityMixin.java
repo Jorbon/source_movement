@@ -11,6 +11,7 @@ import edu.jorbonism.source_movement.ConfigState.DoubleSetting;
 import edu.jorbonism.source_movement.Srcmov;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MovementType;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
@@ -47,7 +48,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 			// Choose boost direction
 			float yaw_radians = this.getYaw() * (float) (Math.PI / 180.0);
 			if (Srcmov.config_state.get_boolean(ConfigState.BooleanSetting.JumpBoostDirectionally)) {
-				     if ( this.sidewaysSpeed > this.forwardSpeed &&  this.sidewaysSpeed > -this.forwardSpeed) yaw_radians -= Math.PI * 0.5;
+					 if ( this.sidewaysSpeed > this.forwardSpeed &&  this.sidewaysSpeed > -this.forwardSpeed) yaw_radians -= Math.PI * 0.5;
 				else if (-this.sidewaysSpeed > this.forwardSpeed && -this.sidewaysSpeed > -this.forwardSpeed) yaw_radians += Math.PI * 0.5;
 				else if (this.forwardSpeed < 0.0) yaw_radians += Math.PI;
 			}
@@ -75,8 +76,10 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	@Inject(method = "getMovementSpeed", at = @At("HEAD"), cancellable = true)
 	public void getMovementSpeedMixin(CallbackInfoReturnable<Float> cir) {
 		if (!Srcmov.enabled) return;
-		cir.setReturnValue((float)this.getAttributeValue(EntityAttributes.MOVEMENT_SPEED));
-    	cir.cancel();
+		
+		if (this.isSprinting()) cir.setReturnValue((float) Srcmov.config_state.get_double(DoubleSetting.SprintGroundSpeed));
+		else cir.setReturnValue((float) Srcmov.config_state.get_double(DoubleSetting.WalkGroundSpeed));
+		cir.cancel();
 	}
 	
 	@Inject(method = "getOffGroundSpeed", at = @At("HEAD"), cancellable = true)
@@ -85,10 +88,10 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 		
 		double speed;
 		if (this.abilities.flying && !this.hasVehicle()) {
-			if (this.isSprinting()) speed = this.abilities.getFlySpeed() * 20.0 * Srcmov.config_state.get_double(DoubleSetting.FlySprintSpeed);//0.1
-	    	else speed = this.abilities.getFlySpeed() * 20.0 * Srcmov.config_state.get_double(DoubleSetting.FlySpeed);//0.05
-		} else if (this.isSprinting()) speed = Srcmov.config_state.get_double(DoubleSetting.SprintSpeed);//0.026
-		else speed = Srcmov.config_state.get_double(DoubleSetting.WalkSpeed);//0.02
+			if (this.isSprinting()) speed = this.abilities.getFlySpeed() * 20.0 * Srcmov.config_state.get_double(DoubleSetting.FlySprintSpeed);
+			else speed = this.abilities.getFlySpeed() * 20.0 * Srcmov.config_state.get_double(DoubleSetting.FlySpeed);
+		} else if (this.isSprinting()) speed = Srcmov.config_state.get_double(DoubleSetting.SprintAirSpeed);
+		else speed = Srcmov.config_state.get_double(DoubleSetting.WalkAirSpeed);
 		
 		cir.setReturnValue((float) speed);
 		cir.cancel();
@@ -96,12 +99,63 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	
 	
 	
+	@Inject(method = "adjustMovementForSneaking", at = @At("HEAD"), cancellable = true)
+	protected void adjustMovementForSneakingMixin(Vec3d velocity, MovementType type, CallbackInfoReturnable<Vec3d> cir) {
+		if (!Srcmov.enabled) return;
+		
+		
+		float step_height = this.getStepHeight();
+		if (this.abilities.flying || velocity.y > 0.0 || !((type == MovementType.SELF || type == MovementType.PLAYER) && this.clipAtLedge() && this.method_30263(step_height))) {
+			cir.setReturnValue(velocity);
+			cir.cancel();
+			return;
+		}
+		
+		double vx = velocity.x;
+		double vz = velocity.z;
+		double h = Math.signum(vx) * 0.05;
+		
+		double i;
+		for(i = Math.signum(vz) * 0.05; vx != 0.0 && this.isSpaceAroundPlayerEmpty(vx, 0.0, step_height); vx -= h) {
+			if (Math.abs(vx) <= 0.05) {
+		   		vx = 0.0;
+		   		break;
+			}
+		}
+		
+		while(vz != 0.0 && this.isSpaceAroundPlayerEmpty(0.0, vz, step_height)) {
+			if (Math.abs(vz) <= 0.05) {
+		   		vz = 0.0;
+		   		break;
+			}
+			
+			vz -= i;
+		}
+		
+		while(vx != 0.0 && vz != 0.0 && this.isSpaceAroundPlayerEmpty(vx, vz, step_height)) {
+			if (Math.abs(vx) <= 0.05) {
+				vx = 0.0;
+			} else {
+		   		vx -= h;
+			}
+			
+			if (Math.abs(vz) <= 0.05) {
+		   		vz = 0.0;
+			} else {
+		   		vz -= i;
+			}
+		}
+		
+		cir.setReturnValue(new Vec3d(vx, velocity.y, vz));
+		cir.cancel();
+   	}
+	
+	
+	
 	@Shadow private final PlayerAbilities abilities = new PlayerAbilities();
-	
-	
-	
-	
-	
+	@Shadow protected abstract boolean clipAtLedge();
+	@Shadow private boolean method_30263(float f) { return false; }
+	@Shadow private boolean isSpaceAroundPlayerEmpty(double offsetX, double offsetZ, float f) { return false; }
 	
 	
 	
@@ -294,13 +348,13 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	// 	double speed = this.getMovementSpeedSrcmov(blockSlipperiness);
 		
 	// 	double d = movementInput.lengthSquared();
-    // 	if (d < 1E-8)
-    //     	return;
+	// 	if (d < 1E-8)
+	//	 	return;
 			
-    //     Vec3d inputAcc = (d > 1 ? movementInput.normalize() : movementInput).multiply(speed);
-    //     double f = MathHelper.sin(this.getYaw() * 0.017453292F);
-    //     double g = MathHelper.cos(this.getYaw() * 0.017453292F);
-    //     Vec3d a = new Vec3d(inputAcc.x * g - inputAcc.z * f, inputAcc.y, inputAcc.z * g + inputAcc.x * f);
+	//	 Vec3d inputAcc = (d > 1 ? movementInput.normalize() : movementInput).multiply(speed);
+	//	 double f = MathHelper.sin(this.getYaw() * 0.017453292F);
+	//	 double g = MathHelper.cos(this.getYaw() * 0.017453292F);
+	//	 Vec3d a = new Vec3d(inputAcc.x * g - inputAcc.z * f, inputAcc.y, inputAcc.z * g + inputAcc.x * f);
 		
 		
 	// 	// implement the soft control cap at 300su by default
