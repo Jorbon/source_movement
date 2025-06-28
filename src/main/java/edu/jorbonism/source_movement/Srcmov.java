@@ -23,6 +23,14 @@ public class Srcmov implements ClientModInitializer {
 	// public static final double VANILLA_SPRINT_SPEED = VANILLA_WALK_SPEED * 1.3;
 	// public static final double VANILLA_SNEAK_SPEED = VANILLA_WALK_SPEED * 0.3;
 	
+	// typical speeds:
+	// walk: 0.1155
+	// walk diagonal: 0.120264
+	// sprint: 0.1501525
+	// sprint diagonal: 0.1532167
+	// sneak: 0.0353577
+	// sneak diagonal: 0.05
+	
 	
 	public static boolean enabled = true;
 	public static ConfigState config_state = new ConfigState();

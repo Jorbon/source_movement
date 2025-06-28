@@ -9,16 +9,19 @@ public class ConfigState {
 	public enum BooleanSetting {
 		ScrollJumping,
 		JumpBoostDirectionally,
+		Abh,
 	}
 	
 	public static final Map<String, BooleanSetting> BOOLEAN_LOOKUP = Map.ofEntries(
 		Map.entry("scroll_jumping", BooleanSetting.ScrollJumping),
-		Map.entry("jump_boost_directionally", BooleanSetting.JumpBoostDirectionally)
+		Map.entry("jump_boost_directionally", BooleanSetting.JumpBoostDirectionally),
+		Map.entry("abh", BooleanSetting.Abh)
 	);
 	
 	public static final Map<BooleanSetting, Boolean> BOOLEAN_DEFAULTS = Map.ofEntries(
 		Map.entry(BooleanSetting.ScrollJumping, false),
-		Map.entry(BooleanSetting.JumpBoostDirectionally, false)
+		Map.entry(BooleanSetting.JumpBoostDirectionally, false),
+		Map.entry(BooleanSetting.Abh, false)
 	);
 	
 	
@@ -28,19 +31,27 @@ public class ConfigState {
 		JumpPower,
 		BoostSpeed,
 		
-		WalkGroundSpeed,
-		SprintGroundSpeed,
+		GroundSpeedWalk,
+		AirSpeedWalk,
+		GroundSpeedSprint,
+		AirSpeedSprint,
+		GroundSpeedSneak,
+		AirSpeedSneak,
 		Traction,
 		Friction,
-		WalkAirSpeed,
-		SprintAirSpeed,
-		FlySpeed,
-		FlySprintSpeed,
+		
 		HorizontalDrag,
 		VerticalDrag,
+		FlySpeedWalk,
+		FlySpeedSprint,
 		
-		JumpBoostSprintSpeed,
-		JumpBoostWalkSpeed,
+		DiagonalBonusWalk,
+		DiagonalBonusSprint,
+		DiagonalBonusSneak,
+		
+		JumpSpeedBoostWalk,
+		JumpSpeedBoostSprint,
+		JumpSpeedBoostSneak,
 		
 		ClimbSpeed,
 		ClimbMaxFallingSpeed,
@@ -54,7 +65,12 @@ public class ConfigState {
 		ElytraUpwardDrag,
 		ElytraRedirection,
 		ElytraHorizontalDrag,
-		ElytraVerticalDrag
+		ElytraVerticalDrag,
+		
+		HopFriction,
+		AbhLevelWalk,
+		AbhLevelSprint,
+		AbhLevelSneak
 	}
 	
 	public static final Map<String, DoubleSetting> DOUBLE_LOOKUP = Map.ofEntries(
@@ -62,19 +78,28 @@ public class ConfigState {
 		Map.entry("jump_power", DoubleSetting.JumpPower),
 		Map.entry("boost_speed", DoubleSetting.BoostSpeed),
 		
-		Map.entry("walk_ground_speed", DoubleSetting.WalkGroundSpeed),
-		Map.entry("sprint_ground_speed", DoubleSetting.SprintGroundSpeed),
+		Map.entry("ground_speed_walk", DoubleSetting.GroundSpeedWalk),
+		Map.entry("air_speed_walk", DoubleSetting.AirSpeedWalk),
+		Map.entry("ground_speed_sprint", DoubleSetting.GroundSpeedSprint),
+		Map.entry("air_speed_sprint", DoubleSetting.AirSpeedSprint),
+		Map.entry("ground_speed_sneak", DoubleSetting.GroundSpeedSneak),
+		Map.entry("air_speed_sneak", DoubleSetting.AirSpeedSneak),
+		
 		Map.entry("traction", DoubleSetting.Traction),
 		Map.entry("friction", DoubleSetting.Friction),
-		Map.entry("walk_air_speed", DoubleSetting.WalkAirSpeed),
-		Map.entry("sprint_air_speed", DoubleSetting.SprintAirSpeed),
-		Map.entry("fly_speed", DoubleSetting.FlySpeed),
-		Map.entry("fly_sprint_speed", DoubleSetting.FlySprintSpeed),
 		Map.entry("horizontal_drag", DoubleSetting.HorizontalDrag),
 		Map.entry("vertical_drag", DoubleSetting.VerticalDrag),
 		
-		Map.entry("jump_boost_sprint_speed", DoubleSetting.JumpBoostSprintSpeed),
-		Map.entry("jump_boost_walk_speed", DoubleSetting.JumpBoostWalkSpeed),
+		Map.entry("fly_speed_walk", DoubleSetting.FlySpeedWalk),
+		Map.entry("fly_speed_sprint", DoubleSetting.FlySpeedSprint),
+		
+		Map.entry("diagonal_bonus_walk", DoubleSetting.DiagonalBonusWalk),
+		Map.entry("diagonal_bonus_sprint", DoubleSetting.DiagonalBonusSprint),
+		Map.entry("diagonal_bonus_sneak", DoubleSetting.DiagonalBonusSneak),
+		
+		Map.entry("jump_speed_boost_walk", DoubleSetting.JumpSpeedBoostWalk),
+		Map.entry("jump_speed_boost_sprint", DoubleSetting.JumpSpeedBoostSprint),
+		Map.entry("jump_speed_boost_sneak", DoubleSetting.JumpSpeedBoostSneak),
 		
 		Map.entry("climb_speed", DoubleSetting.ClimbSpeed),
 		Map.entry("climb_max_falling_speed", DoubleSetting.ClimbMaxFallingSpeed),
@@ -88,7 +113,12 @@ public class ConfigState {
 		Map.entry("elytra_upward_drag", DoubleSetting.ElytraUpwardDrag),
 		Map.entry("elytra_redirection", DoubleSetting.ElytraRedirection),
 		Map.entry("elytra_horizontal_drag", DoubleSetting.ElytraHorizontalDrag),
-		Map.entry("elytra_vertical_drag", DoubleSetting.ElytraVerticalDrag)
+		Map.entry("elytra_vertical_drag", DoubleSetting.ElytraVerticalDrag),
+		
+		Map.entry("hop_friction", DoubleSetting.HopFriction),
+		Map.entry("abh_level_walk", DoubleSetting.AbhLevelWalk),
+		Map.entry("abh_level_sprint", DoubleSetting.AbhLevelSprint),
+		Map.entry("abh_level_sneak", DoubleSetting.AbhLevelSneak)
 	);
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_DEFAULTS = Map.ofEntries(
@@ -96,19 +126,27 @@ public class ConfigState {
 		Map.entry(DoubleSetting.JumpPower, 0.42),
 		Map.entry(DoubleSetting.BoostSpeed, 0.0),
 		
-		Map.entry(DoubleSetting.WalkGroundSpeed, 0.1),
-		Map.entry(DoubleSetting.SprintGroundSpeed, 0.13),
+		Map.entry(DoubleSetting.GroundSpeedWalk, 0.098),
+		Map.entry(DoubleSetting.AirSpeedWalk, 0.0196),
+		Map.entry(DoubleSetting.GroundSpeedSprint, 0.1274),
+		Map.entry(DoubleSetting.AirSpeedSprint, 0.02548),
+		Map.entry(DoubleSetting.GroundSpeedSneak, 0.0294),
+		Map.entry(DoubleSetting.AirSpeedSneak, 0.00588),
+		
 		Map.entry(DoubleSetting.Traction, 0.216),
 		Map.entry(DoubleSetting.Friction, 1.0),
-		Map.entry(DoubleSetting.WalkAirSpeed, 0.02),
-		Map.entry(DoubleSetting.SprintAirSpeed, 0.026),
-		Map.entry(DoubleSetting.FlySpeed, 0.05),
-		Map.entry(DoubleSetting.FlySprintSpeed, 0.1),
 		Map.entry(DoubleSetting.HorizontalDrag, 0.09),
 		Map.entry(DoubleSetting.VerticalDrag, 0.02),
+		Map.entry(DoubleSetting.FlySpeedWalk, 0.049),
+		Map.entry(DoubleSetting.FlySpeedSprint, 0.098),
 		
-		Map.entry(DoubleSetting.JumpBoostSprintSpeed, 0.2),
-		Map.entry(DoubleSetting.JumpBoostWalkSpeed, 0.0),
+		Map.entry(DoubleSetting.DiagonalBonusWalk, 0.0492696645382),
+		Map.entry(DoubleSetting.DiagonalBonusSprint, 0.0492696645382),
+		Map.entry(DoubleSetting.DiagonalBonusSneak, 1.0),
+		
+		Map.entry(DoubleSetting.JumpSpeedBoostWalk, 0.0),
+		Map.entry(DoubleSetting.JumpSpeedBoostSprint, 0.2),
+		Map.entry(DoubleSetting.JumpSpeedBoostSneak, 0.0),
 		
 		Map.entry(DoubleSetting.ClimbSpeed, 0.2),
 		Map.entry(DoubleSetting.ClimbMaxFallingSpeed, 0.15),
@@ -122,7 +160,12 @@ public class ConfigState {
 		Map.entry(DoubleSetting.ElytraUpwardDrag, 0.04),
 		Map.entry(DoubleSetting.ElytraRedirection, 0.1),
 		Map.entry(DoubleSetting.ElytraHorizontalDrag, 0.01),
-		Map.entry(DoubleSetting.ElytraVerticalDrag, 0.02)
+		Map.entry(DoubleSetting.ElytraVerticalDrag, 0.02),
+		
+		Map.entry(DoubleSetting.HopFriction, 1.0),
+		Map.entry(DoubleSetting.AbhLevelWalk, 0.1),
+		Map.entry(DoubleSetting.AbhLevelSprint, 0.13),
+		Map.entry(DoubleSetting.AbhLevelSneak, 0.05)
 	);
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_MINS = Map.ofEntries(
@@ -132,18 +175,28 @@ public class ConfigState {
 		Map.entry(DoubleSetting.HorizontalDrag, 0.0),
 		Map.entry(DoubleSetting.VerticalDrag, 0.0),
 		
+		Map.entry(DoubleSetting.DiagonalBonusWalk, 0.0),
+		Map.entry(DoubleSetting.DiagonalBonusSprint, 0.0),
+		Map.entry(DoubleSetting.DiagonalBonusSneak, 0.0),
+		
 		Map.entry(DoubleSetting.ClimbSpeed, 0.0),
 		Map.entry(DoubleSetting.ClimbMaxFallingSpeed, 0.0),
 		Map.entry(DoubleSetting.ClimbMaxHorizontalSpeed, 0.0),
 		
 		Map.entry(DoubleSetting.ElytraRedirection, 0.0),
 		Map.entry(DoubleSetting.ElytraHorizontalDrag, 0.0),
-		Map.entry(DoubleSetting.ElytraVerticalDrag, 0.0)
+		Map.entry(DoubleSetting.ElytraVerticalDrag, 0.0),
+		
+		Map.entry(DoubleSetting.HopFriction, 0.0)
 	);
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_MAXES = Map.ofEntries(
 		Map.entry(DoubleSetting.HorizontalDrag, 1.0),
 		Map.entry(DoubleSetting.VerticalDrag, 1.0),
+		
+		Map.entry(DoubleSetting.DiagonalBonusWalk, 1.0),
+		Map.entry(DoubleSetting.DiagonalBonusSprint, 1.0),
+		Map.entry(DoubleSetting.DiagonalBonusSneak, 1.0),
 		
 		Map.entry(DoubleSetting.ElytraRedirection, 1.0),
 		Map.entry(DoubleSetting.ElytraHorizontalDrag, 1.0),
@@ -152,7 +205,8 @@ public class ConfigState {
 	
 	public static final Map<DoubleSetting, Double> DOUBLE_BASE_MULTIPLE = Map.ofEntries(
 		Map.entry(DoubleSetting.BoostSpeed, 1.0),
-		Map.entry(DoubleSetting.JumpBoostWalkSpeed, 0.2)
+		Map.entry(DoubleSetting.JumpSpeedBoostWalk, 0.2),
+		Map.entry(DoubleSetting.JumpSpeedBoostSneak, 0.2)
 	);
 	
 	

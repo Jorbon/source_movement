@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import edu.jorbonism.source_movement.ConfigState.BooleanSetting;
 import edu.jorbonism.source_movement.ConfigState.DoubleSetting;
 import edu.jorbonism.source_movement.Srcmov;
 import net.minecraft.block.Blocks;
@@ -34,10 +35,38 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	
 	protected LivingEntityMixin(EntityType<? extends LivingEntity> entityType, World world) { super(entityType, world); }
 	
+	public boolean was_on_ground = false;
+	
+	
+	@Inject(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;isGliding()Z", ordinal = 0), require = 1)
+	public void before_travel(CallbackInfo ci) {
+		if (!Srcmov.enabled) return;
+		if (!(((Entity) this) instanceof PlayerEntity)) return;
+		
+		this.forwardSpeed /= 0.98f;
+		this.sidewaysSpeed /= 0.98f;
+		
+		if (this.isSneaking()) {
+			this.forwardSpeed /= 0.3f;
+			this.sidewaysSpeed /= 0.3f;
+		}
+		
+		double diagonal_boost = 0.0;
+		if (this.isSneaking()) diagonal_boost = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
+		else if (this.isSprinting()) diagonal_boost = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
+		else diagonal_boost = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
+		
+		float throttle = (float) (1.0 / (1.0 + (Math.sqrt(2) - 1.0) * diagonal_boost));
+		this.forwardSpeed *= throttle;
+		this.sidewaysSpeed *= throttle;
+	}
+	
 	
 	@SuppressWarnings("deprecation")
 	@Inject(method = "travelMidAir", at = @At("HEAD"), cancellable = true)
-	private void travelMidAirMixin(Vec3d movement_input, CallbackInfo ci) {
+	private void travel_mid_air_mixin(Vec3d movement_input, CallbackInfo ci) {
+		if (((Entity) this) instanceof PlayerEntity) System.out.println(this.getVelocity().horizontalLength());
+		
 		if (!Srcmov.enabled) return;
 		if (!(((Entity) this) instanceof PlayerEntity)) return;
 		
@@ -52,6 +81,7 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 		
 		// Apply movement input
 		this.updateVelocity((float) movement_speed, movement_input);
+		
 		if (this.isClimbing()) { // Apply climbing speed
 			this.onLanding();
 			
@@ -91,9 +121,43 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 			vy = 0.0;
 		}
 		
-		double friction = Math.clamp(1.0 - (1.0 - slipperiness) * Srcmov.config_state.get_double(DoubleSetting.Friction), 0.0, 1.0);
-		double vx = velocity.x * friction;
-		double vz = velocity.z * friction;
+		
+		
+		double vx = velocity.x;
+		double vz = velocity.z;
+		
+		double friction = Math.clamp((1.0 - slipperiness) * Srcmov.config_state.get_double(DoubleSetting.Friction), 0.0, 1.0);
+		
+		
+		if (this.isOnGround() && !this.was_on_ground) {
+			friction *= Srcmov.config_state.get_double(DoubleSetting.HopFriction);
+			vx *= 1.0 - friction;
+			vz *= 1.0 - friction;
+			
+			if (Srcmov.config_state.get_boolean(BooleanSetting.Abh)) {
+				double horizontal_speed = Math.sqrt(vx * vx + vz * vz);
+				if (horizontal_speed > 1e-4) {
+					// double input_magnitude = Math.min(movement_input.horizontalLength(), 1.0);
+					double max_speed = Srcmov.config_state.get_double(DoubleSetting.AbhLevelWalk);
+					if (horizontal_speed > max_speed) {
+						double impulse = max_speed - horizontal_speed;
+						float yaw_radians = this.getYaw() * (float) Math.PI / 180.0f;
+						if (movement_input.z < 0.0) yaw_radians += Math.PI;
+						vx -= impulse * MathHelper.sin(yaw_radians);
+						vz += impulse * MathHelper.cos(yaw_radians);
+					}
+					
+				}
+			}
+			
+		} else {
+			vx *= 1.0 - friction;
+			vz *= 1.0 - friction;
+		}
+		
+		this.was_on_ground = this.isOnGround();
+		
+		
 		
 		vx *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.HorizontalDrag);
 		vz *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.HorizontalDrag);
@@ -109,7 +173,7 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	
 	
 	@Inject(method = "travelInFluid", at = @At("HEAD"), cancellable = true)
-	private void travelInFluidMixin(Vec3d movementInput, CallbackInfo ci) {
+	private void travel_in_fluid_mixin(Vec3d movementInput, CallbackInfo ci) {
 		if (!Srcmov.enabled) return;
 		if (!(((Entity) this) instanceof PlayerEntity)) return;
 		
@@ -168,7 +232,7 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	
 	
 	@Inject(method = "calcGlidingVelocity", at = @At("HEAD"), cancellable = true)
-	private void calcGlidingVelocityMixin(Vec3d velocity, CallbackInfoReturnable<Vec3d> cir) {
+	private void calc_gliding_velocity_mixin(Vec3d velocity, CallbackInfoReturnable<Vec3d> cir) {
 		if (!Srcmov.enabled) return;
 		if (!(((Entity) this) instanceof PlayerEntity)) return;
 		
@@ -217,6 +281,8 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	}
 	
 	
+	@Shadow public float forwardSpeed;
+	@Shadow public float sidewaysSpeed;
 	@Shadow protected boolean jumping;
 	@Shadow public abstract boolean isHoldingOntoLadder();
 	@Shadow public abstract StatusEffectInstance getStatusEffect(RegistryEntry<StatusEffect> levitation);
