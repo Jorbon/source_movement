@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import edu.jorbonism.source_movement.ConfigState.BooleanSetting;
 import edu.jorbonism.source_movement.ConfigState.DoubleSetting;
-import edu.jorbonism.source_movement.Srcmov;
+import edu.jorbonism.source_movement.ClientMain;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.PowderSnowBlock;
 import net.minecraft.entity.Attackable;
@@ -40,7 +40,7 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	
 	@Inject(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;isGliding()Z", ordinal = 0), require = 1)
 	public void before_travel(CallbackInfo ci) {
-		if (!Srcmov.enabled) return;
+		if (!ClientMain.enabled) return;
 		if (!(((Entity) this) instanceof PlayerEntity)) return;
 		
 		this.forwardSpeed /= 0.98f;
@@ -52,9 +52,9 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 		}
 		
 		double diagonal_boost = 0.0;
-		if (this.isSneaking()) diagonal_boost = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
-		else if (this.isSprinting()) diagonal_boost = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
-		else diagonal_boost = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
+		if (this.isSneaking()) diagonal_boost = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
+		else if (this.isSprinting()) diagonal_boost = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
+		else diagonal_boost = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
 		
 		float throttle = (float) (1.0 / (1.0 + (Math.sqrt(2) - 1.0) * diagonal_boost));
 		this.forwardSpeed *= throttle;
@@ -65,18 +65,18 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	@SuppressWarnings("deprecation")
 	@Inject(method = "travelMidAir", at = @At("HEAD"), cancellable = true)
 	private void travel_mid_air_mixin(Vec3d movement_input, CallbackInfo ci) {
-		if (((Entity) this) instanceof PlayerEntity) System.out.println(this.getVelocity().horizontalLength());
+		// if (((Entity) this) instanceof PlayerEntity) System.out.println(this.getVelocity().horizontalLength());
 		
-		if (!Srcmov.enabled) return;
+		if (!ClientMain.enabled) return;
 		if (!(((Entity) this) instanceof PlayerEntity)) return;
 		
 		BlockPos block_pos = this.getVelocityAffectingPos();
-		double slipperiness = this.isOnGround() ? this.getWorld().getBlockState(block_pos).getBlock().getSlipperiness() : 1.0;
+		double slipperiness = this.isOnGround() ? this.getEntityWorld().getBlockState(block_pos).getBlock().getSlipperiness() : 1.0;
 		
 		// Get movement speed
 		double movement_speed;
 		if (this.isOnGround()) 
-			movement_speed = this.getMovementSpeed() / (slipperiness * slipperiness * slipperiness) * Srcmov.config_state.get_double(DoubleSetting.Traction);
+			movement_speed = this.getMovementSpeed() / (slipperiness * slipperiness * slipperiness) * ClientMain.config_state.get_double(DoubleSetting.Traction);
 		else movement_speed = this.getOffGroundSpeed();
 		
 		// Apply movement input
@@ -86,11 +86,11 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 			this.onLanding();
 			
 			Vec3d velocity = this.getVelocity();
-			double max_horizontal_speed = Srcmov.config_state.get_double(DoubleSetting.ClimbMaxHorizontalSpeed);
+			double max_horizontal_speed = ClientMain.config_state.get_double(DoubleSetting.ClimbMaxHorizontalSpeed);
 			double vx = MathHelper.clamp(velocity.x, -max_horizontal_speed, max_horizontal_speed);
 			double vz = MathHelper.clamp(velocity.z, -max_horizontal_speed, max_horizontal_speed);
 			
-			double vy_min = -Srcmov.config_state.get_double(DoubleSetting.ClimbMaxFallingSpeed);
+			double vy_min = -ClientMain.config_state.get_double(DoubleSetting.ClimbMaxFallingSpeed);
 			if (this.isHoldingOntoLadder() && !this.getBlockStateAtPos().isOf(Blocks.SCAFFOLDING)) {
 				vy_min = 0.0;
 			}
@@ -106,16 +106,16 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 		
 		// climbing
 		if ((this.horizontalCollision || this.jumping) && (this.isClimbing() || (this.getBlockStateAtPos().isOf(Blocks.POWDER_SNOW) && PowderSnowBlock.canWalkOnPowderSnow(this)))) {
-			vy = Srcmov.config_state.get_double(DoubleSetting.ClimbSpeed);
+			vy = ClientMain.config_state.get_double(DoubleSetting.ClimbSpeed);
 		}
 		
 		// gravity
 		StatusEffectInstance levitation = this.getStatusEffect(StatusEffects.LEVITATION);
 		if (levitation != null) {
 			vy += (0.05 * (levitation.getAmplifier() + 1) - velocity.y) * 0.2;
-		} else if (!this.getWorld().isClient || this.getWorld().isChunkLoaded(block_pos)) {
+		} else if (!this.getEntityWorld().isClient() || this.getEntityWorld().isChunkLoaded(block_pos)) {
 			vy -= this.getEffectiveGravity();
-		} else if (this.getY() > this.getWorld().getBottomY()) {
+		} else if (this.getY() > this.getEntityWorld().getBottomY()) {
 			vy = -0.1;
 		} else {
 			vy = 0.0;
@@ -126,19 +126,19 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 		double vx = velocity.x;
 		double vz = velocity.z;
 		
-		double friction = Math.clamp((1.0 - slipperiness) * Srcmov.config_state.get_double(DoubleSetting.Friction), 0.0, 1.0);
+		double friction = Math.clamp((1.0 - slipperiness) * ClientMain.config_state.get_double(DoubleSetting.Friction), 0.0, 1.0);
 		
 		
 		if (this.isOnGround() && !this.was_on_ground) {
-			friction *= Srcmov.config_state.get_double(DoubleSetting.HopFriction);
+			friction *= ClientMain.config_state.get_double(DoubleSetting.HopFriction);
 			vx *= 1.0 - friction;
 			vz *= 1.0 - friction;
 			
-			if (Srcmov.config_state.get_boolean(BooleanSetting.Abh)) {
+			if (ClientMain.config_state.get_boolean(BooleanSetting.Abh)) {
 				double horizontal_speed = Math.sqrt(vx * vx + vz * vz);
 				if (horizontal_speed > 1e-4) {
 					// double input_magnitude = Math.min(movement_input.horizontalLength(), 1.0);
-					double max_speed = Srcmov.config_state.get_double(DoubleSetting.AbhLevelWalk);
+					double max_speed = ClientMain.config_state.get_double(DoubleSetting.AbhLevelWalk);
 					if (horizontal_speed > max_speed) {
 						double impulse = max_speed - horizontal_speed;
 						float yaw_radians = this.getYaw() * (float) Math.PI / 180.0f;
@@ -159,10 +159,10 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 		
 		
 		
-		vx *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.HorizontalDrag);
-		vz *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.HorizontalDrag);
+		vx *= 1.0 - ClientMain.config_state.get_double(DoubleSetting.HorizontalDrag);
+		vz *= 1.0 - ClientMain.config_state.get_double(DoubleSetting.HorizontalDrag);
 		
-		vy *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.VerticalDrag);
+		vy *= 1.0 - ClientMain.config_state.get_double(DoubleSetting.VerticalDrag);
 		
 		this.setVelocity(vx, vy, vz);
 		
@@ -174,7 +174,7 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	
 	@Inject(method = "travelInFluid", at = @At("HEAD"), cancellable = true)
 	private void travel_in_fluid_mixin(Vec3d movementInput, CallbackInfo ci) {
-		if (!Srcmov.enabled) return;
+		if (!ClientMain.enabled) return;
 		if (!(((Entity) this) instanceof PlayerEntity)) return;
 		
 		boolean falling = this.getVelocity().y <= 0.0;
@@ -233,7 +233,7 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 	
 	@Inject(method = "calcGlidingVelocity", at = @At("HEAD"), cancellable = true)
 	private void calc_gliding_velocity_mixin(Vec3d velocity, CallbackInfoReturnable<Vec3d> cir) {
-		if (!Srcmov.enabled) return;
+		if (!ClientMain.enabled) return;
 		if (!(((Entity) this) instanceof PlayerEntity)) return;
 		
 		double vx = velocity.x;
@@ -246,35 +246,35 @@ public abstract class LivingEntityMixin extends Entity implements Attackable {
 		double velocity_horizontal_length = Math.sqrt(vx*vx + vz*vz);
 		
 		// gravity
-		double gravity = this.getEffectiveGravity() * Srcmov.config_state.get_double(DoubleSetting.ElytraGravityMultiplier);
+		double gravity = this.getEffectiveGravity() * ClientMain.config_state.get_double(DoubleSetting.ElytraGravityMultiplier);
 		vy -= gravity;
-		vy += gravity * facing_horizontal_length_squared * (1.0 - Srcmov.config_state.get_double(DoubleSetting.ElytraGravityModifier));
+		vy += gravity * facing_horizontal_length_squared * (1.0 - ClientMain.config_state.get_double(DoubleSetting.ElytraGravityModifier));
 		
 		if (facing_horizontal_length > 0.0) {
 			double horizontal_force = 0.0;
 			
 			// downward velocity -> outward force
 			double outward_lift = Math.max(-vy, 0.0) * facing_horizontal_length_squared;
-			vy += outward_lift * Srcmov.config_state.get_double(DoubleSetting.ElytraOutwardLift);
-			horizontal_force += outward_lift * Srcmov.config_state.get_double(DoubleSetting.ElytraOutwardForce);
+			vy += outward_lift * ClientMain.config_state.get_double(DoubleSetting.ElytraOutwardLift);
+			horizontal_force += outward_lift * ClientMain.config_state.get_double(DoubleSetting.ElytraOutwardForce);
 			
 			// outward velocity -> upward force
 			double upward_lift = Math.max(facing.y, 0.0) * velocity_horizontal_length;
-			vy += upward_lift * Srcmov.config_state.get_double(DoubleSetting.ElytraUpwardLift);
-			horizontal_force -= upward_lift * Srcmov.config_state.get_double(DoubleSetting.ElytraUpwardDrag);;
+			vy += upward_lift * ClientMain.config_state.get_double(DoubleSetting.ElytraUpwardLift);
+			horizontal_force -= upward_lift * ClientMain.config_state.get_double(DoubleSetting.ElytraUpwardDrag);;
 			
 			vx += horizontal_force * facing.x / facing_horizontal_length;
 			vz += horizontal_force * facing.z / facing_horizontal_length;
 			
 			// change horizontal velocity towards facing direction
-			double redirection = Srcmov.config_state.get_double(DoubleSetting.ElytraRedirection);
+			double redirection = ClientMain.config_state.get_double(DoubleSetting.ElytraRedirection);
 			vx += redirection * (-vx + velocity_horizontal_length * facing.x / facing_horizontal_length);
 			vz += redirection * (-vz + velocity_horizontal_length * facing.z / facing_horizontal_length);
 		}
 		
-		vx *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.ElytraHorizontalDrag);
-		vz *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.ElytraHorizontalDrag);
-		vy *= 1.0 - Srcmov.config_state.get_double(DoubleSetting.ElytraVerticalDrag);
+		vx *= 1.0 - ClientMain.config_state.get_double(DoubleSetting.ElytraHorizontalDrag);
+		vz *= 1.0 - ClientMain.config_state.get_double(DoubleSetting.ElytraHorizontalDrag);
+		vy *= 1.0 - ClientMain.config_state.get_double(DoubleSetting.ElytraVerticalDrag);
 		
 		cir.setReturnValue(new Vec3d(vx, vy, vz));
 		cir.cancel();

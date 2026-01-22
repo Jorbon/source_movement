@@ -59,7 +59,7 @@ public class ConfigFileIO {
 	}
 	
 	public static void load_config(int index) {
-		Srcmov.config_state.reset();
+		ClientMain.config_state.reset();
 		
 		String[] data = get_config_file_string().split("@");
 		if (index >= data.length - 1) return;
@@ -109,7 +109,7 @@ public class ConfigFileIO {
 		if (key == null) {
 			System.out.println("Source Movement config error: the value \"" + name + "\" doesn't exist or is not a boolean");
 		} else {
-			Srcmov.config_state.set_boolean(key, value);
+			ClientMain.config_state.set_boolean(key, value);
 		}
 	}
 	
@@ -118,7 +118,7 @@ public class ConfigFileIO {
 		if (key == null) {
 			System.out.println("Source Movement config error: the value \"" + name + "\" doesn't exist or is not a number");
 		} else {
-			Srcmov.config_state.set_double(key, value);
+			ClientMain.config_state.set_double(key, value);
 		}
 	}
 	
@@ -129,7 +129,7 @@ public class ConfigFileIO {
 		} else {
 			Double base_multiple_value = ConfigState.DOUBLE_BASE_MULTIPLE.get(key);
 			if (base_multiple_value == null || base_multiple_value == 0.0) base_multiple_value = ConfigState.DOUBLE_DEFAULTS.get(key);
-			Srcmov.config_state.set_double(key, multiplier * base_multiple_value);
+			ClientMain.config_state.set_double(key, multiplier * base_multiple_value);
 		}
 	}
 	

@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "srcmov",
+	"id": "${project_id}",
 	"version": "${version}",
 	
 	"name": "Source Movement",
@@ -14,22 +14,22 @@
 	},
 	
 	"license": "CC0-1.0",
-	"icon": "assets/srcmov/icon.png",
+	"icon": "assets/${project_id}/icon.png",
 	
 	"environment": "*",
 	"entrypoints": {
 		"client": [
-			"edu.jorbonism.source_movement.Srcmov"
+			"${maven_group}.${project_id}.ClientMain"
 		]
 	},
 	"mixins": [
-		"srcmov.mixins.json"
+		"${project_id}.mixins.json"
 	],
 	
 	"depends": {
+		"java": ">=${java_version}",
+		"minecraft": ${minecraft_compatible_range},
 		"fabricloader": "*",
-		"fabric": "*",
-		"minecraft": ">=1.21",
-		"java": "*"
+		"fabric-api": "*"
 	}
 }

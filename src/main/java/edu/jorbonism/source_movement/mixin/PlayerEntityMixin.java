@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import edu.jorbonism.source_movement.ConfigState;
 import edu.jorbonism.source_movement.ConfigState.DoubleSetting;
-import edu.jorbonism.source_movement.Srcmov;
+import edu.jorbonism.source_movement.ClientMain;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerAbilities;
@@ -27,7 +27,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	
 	@Override
 	public void jump() {
-		if (!Srcmov.enabled) {
+		if (!ClientMain.enabled) {
 			super.jump();
 			return;
 		}
@@ -38,16 +38,16 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 			// Choose boost amount
 			float boost = 0.0f;
 			if (this.isSprinting()) {
-				boost = (float) Srcmov.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostSprint);
+				boost = (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostSprint);
 			} else if (Math.abs(this.forwardSpeed) > 1e-7 || Math.abs(this.sidewaysSpeed) > 1e-7) {
 				if (this.isSneaking()) {
-					boost = (float) Srcmov.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostSneak);
-				} else boost = (float) Srcmov.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostWalk);
+					boost = (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostSneak);
+				} else boost = (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostWalk);
 			}
 			
 			// Choose boost direction
 			float yaw_radians = this.getYaw() * (float) (Math.PI / 180.0);
-			if (Srcmov.config_state.get_boolean(ConfigState.BooleanSetting.JumpBoostDirectionally)) {
+			if (ClientMain.config_state.get_boolean(ConfigState.BooleanSetting.JumpBoostDirectionally)) {
 					 if ( this.sidewaysSpeed > this.forwardSpeed &&  this.sidewaysSpeed > -this.forwardSpeed) yaw_radians -= Math.PI * 0.5;
 				else if (-this.sidewaysSpeed > this.forwardSpeed && -this.sidewaysSpeed > -this.forwardSpeed) yaw_radians += Math.PI * 0.5;
 				else if (this.forwardSpeed < 0.0) yaw_radians += Math.PI;
@@ -62,30 +62,30 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	
 	@Override
 	protected float getJumpVelocity(float strength) {
-		if (!Srcmov.enabled) return super.getJumpVelocity(strength);
-		return (float) Srcmov.config_state.get_double(ConfigState.DoubleSetting.JumpPower) * strength * this.getJumpVelocityMultiplier() + this.getJumpBoostVelocityModifier();
+		if (!ClientMain.enabled) return super.getJumpVelocity(strength);
+		return (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpPower) * strength * this.getJumpVelocityMultiplier() + this.getJumpBoostVelocityModifier();
 	}
 	
 	
 	@Override
 	protected double getGravity() {
-		return Srcmov.config_state.get_double(ConfigState.DoubleSetting.Gravity);
+		return ClientMain.config_state.get_double(ConfigState.DoubleSetting.Gravity);
 	}
 	
 	
 	@Inject(method = "getMovementSpeed", at = @At("HEAD"), cancellable = true)
 	public void getMovementSpeedMixin(CallbackInfoReturnable<Float> cir) {
-		if (!Srcmov.enabled) return;
+		if (!ClientMain.enabled) return;
 		
 		double speed;
-		if (this.isSneaking()) speed = Srcmov.config_state.get_double(DoubleSetting.GroundSpeedSneak);
-		else if (this.isSprinting()) speed = Srcmov.config_state.get_double(DoubleSetting.GroundSpeedSprint);
-		else speed = Srcmov.config_state.get_double(DoubleSetting.GroundSpeedWalk);
+		if (this.isSneaking()) speed = ClientMain.config_state.get_double(DoubleSetting.GroundSpeedSneak);
+		else if (this.isSprinting()) speed = ClientMain.config_state.get_double(DoubleSetting.GroundSpeedSprint);
+		else speed = ClientMain.config_state.get_double(DoubleSetting.GroundSpeedWalk);
 		
 		double diagonal_bonus;
-		if (this.isSneaking()) diagonal_bonus = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
-		else if (this.isSprinting()) diagonal_bonus = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
-		else diagonal_bonus = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
+		if (this.isSneaking()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
+		else if (this.isSprinting()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
+		else diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
 		
 		speed *= 1.0 + (Math.sqrt(2.0) - 1.0) * diagonal_bonus;
 		
@@ -95,20 +95,20 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	
 	@Inject(method = "getOffGroundSpeed", at = @At("HEAD"), cancellable = true)
 	protected void getOffGroundSpeedMixin(CallbackInfoReturnable<Float> cir) {
-		if (!Srcmov.enabled) return;
+		if (!ClientMain.enabled) return;
 		
 		double speed;
 		if (this.abilities.flying && !this.hasVehicle()) {
-			if (this.isSprinting()) speed = this.abilities.getFlySpeed() * 20.0 * Srcmov.config_state.get_double(DoubleSetting.FlySpeedSprint);
-			else speed = this.abilities.getFlySpeed() * 20.0 * Srcmov.config_state.get_double(DoubleSetting.FlySpeedWalk);
-		} else if (this.isSneaking()) speed = Srcmov.config_state.get_double(DoubleSetting.AirSpeedSneak);
-		else if (this.isSprinting()) speed = Srcmov.config_state.get_double(DoubleSetting.AirSpeedSprint);
-		else speed = Srcmov.config_state.get_double(DoubleSetting.AirSpeedWalk);
+			if (this.isSprinting()) speed = this.abilities.getFlySpeed() * 20.0 * ClientMain.config_state.get_double(DoubleSetting.FlySpeedSprint);
+			else speed = this.abilities.getFlySpeed() * 20.0 * ClientMain.config_state.get_double(DoubleSetting.FlySpeedWalk);
+		} else if (this.isSneaking()) speed = ClientMain.config_state.get_double(DoubleSetting.AirSpeedSneak);
+		else if (this.isSprinting()) speed = ClientMain.config_state.get_double(DoubleSetting.AirSpeedSprint);
+		else speed = ClientMain.config_state.get_double(DoubleSetting.AirSpeedWalk);
 		
 		double diagonal_bonus;
-		if (this.isSneaking()) diagonal_bonus = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
-		else if (this.isSprinting()) diagonal_bonus = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
-		else diagonal_bonus = Srcmov.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
+		if (this.isSneaking()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
+		else if (this.isSprinting()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
+		else diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
 		
 		speed *= 1.0 + ((Math.sqrt(2.0) - 1.0) * diagonal_bonus);
 		
@@ -201,7 +201,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 	
 	
 	// private void applyInputAcceleration(double blockSlipperiness, Vec3d movementInput) {
-	// 	double speed = this.getMovementSpeedSrcmov(blockSlipperiness);
+	// 	double speed = this.getMovementSpeedMain(blockSlipperiness);
 		
 	// 	double d = movementInput.lengthSquared();
 	// 	if (d < 1E-8)
