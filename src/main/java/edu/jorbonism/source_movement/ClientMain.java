@@ -48,7 +48,7 @@ public class ClientMain implements ClientModInitializer {
 		// register n use-keys in reverse order
 		for (int i = ConfigFileIO.get_num_configs() - 1; i >= 0; i--) {
 			KeyBinding key = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.srcmov.useconfig" + (i+1),
+				"key.source_movement.useconfig" + (i+1),
 				InputUtil.Type.KEYSYM,
 				GLFW.GLFW_KEY_UNKNOWN,
 				MOD_CATEGORY
@@ -56,10 +56,12 @@ public class ClientMain implements ClientModInitializer {
 			
 			ClientTickEvents.END_CLIENT_TICK.register(client -> {
 				if (key.wasPressed()) {
+					// key.getBoundKeyTranslationKey()
 					ClientMain.enabled = true;
 					String tr = key.getBoundKeyTranslationKey();
 					// Use the translation key of the binding to figure out which config to load
-					ConfigFileIO.load_config(Integer.parseInt(tr.substring("key.srcmov.useconfig".length())) - 1);
+					System.out.println(tr);
+					ConfigFileIO.load_config(Integer.parseInt(tr.substring("key.source_movement.useconfig".length())) - 1);
 				}
 			});
 		}
@@ -67,7 +69,7 @@ public class ClientMain implements ClientModInitializer {
 		
 		// disable key
 		key_toggle_srcmov_off = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-			"key.srcmov.disable",
+			"key.source_movement.disable",
 			InputUtil.Type.KEYSYM,
 			GLFW.GLFW_KEY_UNKNOWN,
 			MOD_CATEGORY
@@ -82,7 +84,7 @@ public class ClientMain implements ClientModInitializer {
 		
 		// boost key
 		key_boost = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-			"key.srcmov.boost",
+			"key.source_movement.boost",
 			InputUtil.Type.KEYSYM,
 			GLFW.GLFW_KEY_UNKNOWN,
 			MOD_CATEGORY
@@ -101,6 +103,8 @@ public class ClientMain implements ClientModInitializer {
 				client.player.addVelocity(new Vec3d(fx * boost_speed, fy * boost_speed, fz * boost_speed));
 			}
 		});
+		
+		ConfigFileIO.load_config(0);
 		
 	}
 	
