@@ -6,121 +6,120 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.mojang.authlib.GameProfile;
+
 import edu.jorbonism.source_movement.ConfigState;
 import edu.jorbonism.source_movement.ConfigState.DoubleSetting;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import edu.jorbonism.source_movement.ClientMain;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerAbilities;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
 
-@Mixin(PlayerEntity.class)
-public abstract class PlayerEntityMixin extends LivingEntity {
+@Mixin(Player.class)
+public abstract class PlayerMixin extends LivingEntity {
 	
 	// private boolean onGroundPrevious = true;
 	
-	protected PlayerEntityMixin(EntityType<? extends PlayerEntity> entityType, World world) { super(entityType, world); }
+	protected PlayerMixin(final Level level, final GameProfile gameProfile) { super(EntityTypes.PLAYER, level); }
 	
 	
-	@Override
-	public void jump() {
-		if (!ClientMain.enabled) {
-			super.jump();
-			return;
-		}
+	// @Override
+	// public void jump() {
+	// 	if (!ClientMain.enabled) {
+	// 		super.jump();
+	// 		return;
+	// 	}
 		
-		float jump_velocity = this.getJumpVelocity();
-		if (!(jump_velocity <= 1.0E-5F)) {
+	// 	float jump_velocity = this.getJumpVelocity();
+	// 	if (!(jump_velocity <= 1.0E-5F)) {
 			
-			// Choose boost amount
-			float boost = 0.0f;
-			if (this.isSprinting()) {
-				boost = (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostSprint);
-			} else if (Math.abs(this.forwardSpeed) > 1e-7 || Math.abs(this.sidewaysSpeed) > 1e-7) {
-				if (this.isSneaking()) {
-					boost = (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostSneak);
-				} else boost = (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostWalk);
-			}
+	// 		// Choose boost amount
+	// 		float boost = 0.0f;
+	// 		if (this.isSprinting()) {
+	// 			boost = (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostSprint);
+	// 		} else if (Math.abs(this.forwardSpeed) > 1e-7 || Math.abs(this.sidewaysSpeed) > 1e-7) {
+	// 			if (this.isSneaking()) {
+	// 				boost = (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostSneak);
+	// 			} else boost = (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpSpeedBoostWalk);
+	// 		}
 			
-			// Choose boost direction
-			float yaw_radians = this.getYaw() * (float) (Math.PI / 180.0);
-			if (ClientMain.config_state.get_boolean(ConfigState.BooleanSetting.JumpBoostDirectionally)) {
-					 if ( this.sidewaysSpeed > this.forwardSpeed &&  this.sidewaysSpeed > -this.forwardSpeed) yaw_radians -= Math.PI * 0.5;
-				else if (-this.sidewaysSpeed > this.forwardSpeed && -this.sidewaysSpeed > -this.forwardSpeed) yaw_radians += Math.PI * 0.5;
-				else if (this.forwardSpeed < 0.0) yaw_radians += Math.PI;
-			}
+	// 		// Choose boost direction
+	// 		float yaw_radians = this.getYaw() * (float) (Math.PI / 180.0);
+	// 		if (ClientMain.config_state.get_boolean(ConfigState.BooleanSetting.JumpBoostDirectionally)) {
+	// 				 if ( this.sidewaysSpeed > this.forwardSpeed &&  this.sidewaysSpeed > -this.forwardSpeed) yaw_radians -= Math.PI * 0.5;
+	// 			else if (-this.sidewaysSpeed > this.forwardSpeed && -this.sidewaysSpeed > -this.forwardSpeed) yaw_radians += Math.PI * 0.5;
+	// 			else if (this.forwardSpeed < 0.0) yaw_radians += Math.PI;
+	// 		}
 			
-			Vec3d velocity = this.getVelocity();
-			this.setVelocity(velocity.x - MathHelper.sin(yaw_radians) * boost, Math.max(jump_velocity, velocity.y), velocity.z + MathHelper.cos(yaw_radians) * boost);
+	// 		Vec3d velocity = this.getVelocity();
+	// 		this.setVelocity(velocity.x - MathHelper.sin(yaw_radians) * boost, Math.max(jump_velocity, velocity.y), velocity.z + MathHelper.cos(yaw_radians) * boost);
 			
-			this.velocityDirty = true;
-		}
-	}
+	// 		this.velocityDirty = true;
+	// 	}
+	// }
 	
-	@Override
-	protected float getJumpVelocity(float strength) {
-		if (!ClientMain.enabled) return super.getJumpVelocity(strength);
-		return (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpPower) * strength * this.getJumpVelocityMultiplier() + this.getJumpBoostVelocityModifier();
-	}
-	
-	
-	@Override
-	protected double getGravity() {
-		return ClientMain.config_state.get_double(ConfigState.DoubleSetting.Gravity);
-	}
+	// @Override
+	// protected float getJumpVelocity(float strength) {
+	// 	if (!ClientMain.enabled) return super.getJumpVelocity(strength);
+	// 	return (float) ClientMain.config_state.get_double(ConfigState.DoubleSetting.JumpPower) * strength * this.getJumpVelocityMultiplier() + this.getJumpBoostVelocityModifier();
+	// }
 	
 	
-	@Inject(method = "getMovementSpeed", at = @At("HEAD"), cancellable = true)
-	public void getMovementSpeedMixin(CallbackInfoReturnable<Float> cir) {
-		if (!ClientMain.enabled) return;
+	// @Override
+	// protected double getGravity() {
+	// 	return ClientMain.config_state.get_double(ConfigState.DoubleSetting.Gravity);
+	// }
+	
+	
+	// @Inject(method = "getMovementSpeed", at = @At("HEAD"), cancellable = true)
+	// public void getMovementSpeedMixin(CallbackInfoReturnable<Float> cir) {
+	// 	if (!ClientMain.enabled) return;
 		
-		double speed;
-		if (this.isSneaking()) speed = ClientMain.config_state.get_double(DoubleSetting.GroundSpeedSneak);
-		else if (this.isSprinting()) speed = ClientMain.config_state.get_double(DoubleSetting.GroundSpeedSprint);
-		else speed = ClientMain.config_state.get_double(DoubleSetting.GroundSpeedWalk);
+	// 	double speed;
+	// 	if (this.isSneaking()) speed = ClientMain.config_state.get_double(DoubleSetting.GroundSpeedSneak);
+	// 	else if (this.isSprinting()) speed = ClientMain.config_state.get_double(DoubleSetting.GroundSpeedSprint);
+	// 	else speed = ClientMain.config_state.get_double(DoubleSetting.GroundSpeedWalk);
 		
-		double diagonal_bonus;
-		if (this.isSneaking()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
-		else if (this.isSprinting()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
-		else diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
+	// 	double diagonal_bonus;
+	// 	if (this.isSneaking()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
+	// 	else if (this.isSprinting()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
+	// 	else diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
 		
-		speed *= 1.0 + (Math.sqrt(2.0) - 1.0) * diagonal_bonus;
+	// 	speed *= 1.0 + (Math.sqrt(2.0) - 1.0) * diagonal_bonus;
 		
-		cir.setReturnValue((float) speed);
-		cir.cancel();
-	}
+	// 	cir.setReturnValue((float) speed);
+	// 	cir.cancel();
+	// }
 	
-	@Inject(method = "getOffGroundSpeed", at = @At("HEAD"), cancellable = true)
-	protected void getOffGroundSpeedMixin(CallbackInfoReturnable<Float> cir) {
-		if (!ClientMain.enabled) return;
+	// @Inject(method = "getOffGroundSpeed", at = @At("HEAD"), cancellable = true)
+	// protected void getOffGroundSpeedMixin(CallbackInfoReturnable<Float> cir) {
+	// 	if (!ClientMain.enabled) return;
 		
-		double speed;
-		if (this.abilities.flying && !this.hasVehicle()) {
-			if (this.isSprinting()) speed = this.abilities.getFlySpeed() * 20.0 * ClientMain.config_state.get_double(DoubleSetting.FlySpeedSprint);
-			else speed = this.abilities.getFlySpeed() * 20.0 * ClientMain.config_state.get_double(DoubleSetting.FlySpeedWalk);
-		} else if (this.isSneaking()) speed = ClientMain.config_state.get_double(DoubleSetting.AirSpeedSneak);
-		else if (this.isSprinting()) speed = ClientMain.config_state.get_double(DoubleSetting.AirSpeedSprint);
-		else speed = ClientMain.config_state.get_double(DoubleSetting.AirSpeedWalk);
+	// 	double speed;
+	// 	if (this.abilities.flying && !this.hasVehicle()) {
+	// 		if (this.isSprinting()) speed = this.abilities.getFlySpeed() * 20.0 * ClientMain.config_state.get_double(DoubleSetting.FlySpeedSprint);
+	// 		else speed = this.abilities.getFlySpeed() * 20.0 * ClientMain.config_state.get_double(DoubleSetting.FlySpeedWalk);
+	// 	} else if (this.isSneaking()) speed = ClientMain.config_state.get_double(DoubleSetting.AirSpeedSneak);
+	// 	else if (this.isSprinting()) speed = ClientMain.config_state.get_double(DoubleSetting.AirSpeedSprint);
+	// 	else speed = ClientMain.config_state.get_double(DoubleSetting.AirSpeedWalk);
 		
-		double diagonal_bonus;
-		if (this.isSneaking()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
-		else if (this.isSprinting()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
-		else diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
+	// 	double diagonal_bonus;
+	// 	if (this.isSneaking()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSneak);
+	// 	else if (this.isSprinting()) diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusSprint);
+	// 	else diagonal_bonus = ClientMain.config_state.get_double(DoubleSetting.DiagonalBonusWalk);
 		
-		speed *= 1.0 + ((Math.sqrt(2.0) - 1.0) * diagonal_bonus);
+	// 	speed *= 1.0 + ((Math.sqrt(2.0) - 1.0) * diagonal_bonus);
 		
-		cir.setReturnValue((float) speed);
-		cir.cancel();
-	}
+	// 	cir.setReturnValue((float) speed);
+	// 	cir.cancel();
+	// }
 	
 	
 	
-	@Shadow private final PlayerAbilities abilities = new PlayerAbilities();
-	@Shadow protected abstract boolean clipAtLedge();
-	@Shadow private boolean method_30263(float f) { return false; }
+	// @Shadow private final PlayerAbilities abilities = new PlayerAbilities();
+	// @Shadow protected abstract boolean clipAtLedge();
+	// @Shadow private boolean method_30263(float f) { return false; }
 	
 	
 	

@@ -1,14 +1,16 @@
 package edu.jorbonism.source_movement;
 
-import org.lwjgl.glfw.GLFW;
+import org.jspecify.annotations.NonNull;
+import org.lwjgl.sdl.SDLKeycode;
+
+import com.mojang.blaze3d.platform.InputConstants;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.Vec3;
 
 
 
@@ -35,72 +37,73 @@ public class ClientMain implements ClientModInitializer {
 	
 	public static boolean is_scroll_jump_queued = false;
 	
-	private static final KeyBinding.Category MOD_CATEGORY = KeyBinding.Category.create(Identifier.of("source_movement"));
-	private static KeyBinding key_toggle_srcmov_off;
-	private static KeyBinding key_boost;
+	private static final KeyMapping.@NonNull Category MOD_CATEGORY = KeyMapping.Category.register(Identifier.withDefaultNamespace("source_movement"));
+	// private static KeyMapping key_toggle_srcmov_off;
+	private static KeyMapping key_boost;
 	
 	
 	@Override
 	public void onInitializeClient() {
 		
-		ConfigFileIO.generate_config_file();
+		// ConfigFileIO.generate_config_file();
 		
-		// register n use-keys in reverse order
-		for (int i = ConfigFileIO.get_num_configs() - 1; i >= 0; i--) {
-			KeyBinding key = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.source_movement.useconfig" + (i+1),
-				InputUtil.Type.KEYSYM,
-				GLFW.GLFW_KEY_UNKNOWN,
-				MOD_CATEGORY
-			));
+		// // register n use-keys in reverse order
+		// for (int i = ConfigFileIO.get_num_configs() - 1; i >= 0; i--) {
+		// 	KeyMapping key = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+		// 		"key.source_movement.useconfig" + (i + 1),
+		// 		InputConstants.Type.KEYBOARD,
+		// 		SDLKeycode.SDLK_UNKNOWN,
+		// 		MOD_CATEGORY
+		// 	));
 			
-			ClientTickEvents.END_CLIENT_TICK.register(client -> {
-				if (key.wasPressed()) {
-					// key.getBoundKeyTranslationKey()
-					ClientMain.enabled = true;
-					String tr = key.getBoundKeyTranslationKey();
-					// Use the translation key of the binding to figure out which config to load
-					System.out.println(tr);
-					ConfigFileIO.load_config(Integer.parseInt(tr.substring("key.source_movement.useconfig".length())) - 1);
-				}
-			});
-		}
+		// 	ClientTickEvents.END_CLIENT_TICK.register(client -> {
+		// 		if (key.consumeClick()) {
+		// 			// key.getBoundKeyTranslationKey()
+		// 			ClientMain.enabled = true;
+		// 			var name = key.getName();
+		// 			// Use the translation key of the binding to figure out which config to load
+		// 			ConfigFileIO.load_config(Integer.parseInt(name.substring("key.source_movement.useconfig".length())) - 1);
+		// 		}
+		// 	});
+		// }
 		
 		
-		// disable key
-		key_toggle_srcmov_off = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-			"key.source_movement.disable",
-			InputUtil.Type.KEYSYM,
-			GLFW.GLFW_KEY_UNKNOWN,
-			MOD_CATEGORY
-		));
+		// // disable key
+		// key_toggle_srcmov_off = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+		// 	"key.source_movement.disable",
+		// 	InputConstants.Type.KEYBOARD,
+		// 	SDLKeycode.SDLK_UNKNOWN,
+		// 	MOD_CATEGORY
+		// ));
 		
-		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			if (key_toggle_srcmov_off.wasPressed()) {
-				ClientMain.enabled = false;
-			}
-		});
+		// ClientTickEvents.END_CLIENT_TICK.register(client -> {
+		// 	if (key_toggle_srcmov_off.consumeClick()) {
+		// 		ClientMain.enabled = false;
+		// 	}
+		// });
 		
 		
 		// boost key
-		key_boost = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+		key_boost = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 			"key.source_movement.boost",
-			InputUtil.Type.KEYSYM,
-			GLFW.GLFW_KEY_UNKNOWN,
+			InputConstants.Type.KEYBOARD,
+			SDLKeycode.SDLK_UNKNOWN,
 			MOD_CATEGORY
 		));
 		
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (!ClientMain.enabled) return;
-			while (key_boost.wasPressed()) {
-				double boost_speed = config_state.get_double(ConfigState.DoubleSetting.BoostSpeed);
+			var player = client.player;
+			if (player == null) return;
+			while (key_boost.consumeClick()) {
+				double boost_speed = 1.0; //config_state.get_double(ConfigState.DoubleSetting.BoostSpeed);
 				
-				double yaw = client.player.getYaw() * 0.017453292;
-				double pitch = client.player.getPitch() * 0.017453292;
+				double yaw = player.getYRot() * 0.017453292;
+				double pitch = player.getXRot() * 0.017453292;
 				double fx = -Math.sin(yaw) * Math.cos(pitch);
 				double fz = Math.cos(yaw) * Math.cos(pitch);
 				double fy = -Math.sin(pitch);
-				client.player.addVelocity(new Vec3d(fx * boost_speed, fy * boost_speed, fz * boost_speed));
+				player.addDeltaMovement(new Vec3(fx * boost_speed, fy * boost_speed, fz * boost_speed));
 			}
 		});
 		

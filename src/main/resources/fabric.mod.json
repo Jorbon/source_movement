@@ -23,7 +23,7 @@
 		]
 	},
 	"mixins": [
-		"${project_id}.mixins.json"
+		
 	],
 	
 	"depends": {
