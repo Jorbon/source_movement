@@ -40,6 +40,8 @@ public class ClientMain implements ClientModInitializer {
 	private static final KeyMapping.@NonNull Category MOD_CATEGORY = KeyMapping.Category.register(Identifier.withDefaultNamespace("source_movement"));
 	// private static KeyMapping key_toggle_srcmov_off;
 	private static KeyMapping key_boost;
+	private static KeyMapping key_home;
+	private static KeyMapping key_back;
 	
 	
 	@Override
@@ -91,6 +93,51 @@ public class ClientMain implements ClientModInitializer {
 			MOD_CATEGORY
 		));
 		
+		key_home = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+			"key.source_movement.home",
+			InputConstants.Type.KEYBOARD,
+			SDLKeycode.SDLK_UNKNOWN,
+			MOD_CATEGORY
+		));
+		
+		key_back = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+			"key.source_movement.back",
+			InputConstants.Type.KEYBOARD,
+			SDLKeycode.SDLK_UNKNOWN,
+			MOD_CATEGORY
+		));
+		
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			var player = client.player;
+			if (player == null) return;
+			while (key_boost.consumeClick()) {
+				double boost_speed = 1.0; //config_state.get_double(ConfigState.DoubleSetting.BoostSpeed);
+				
+				double yaw = player.getYRot() * 0.017453292;
+				double pitch = player.getXRot() * 0.017453292;
+				double fx = -Math.sin(yaw) * Math.cos(pitch);
+				double fz = Math.cos(yaw) * Math.cos(pitch);
+				double fy = -Math.sin(pitch);
+				player.addDeltaMovement(new Vec3(fx * boost_speed, fy * boost_speed, fz * boost_speed));
+			}
+		});
+		
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			var player = client.player;
+			if (player == null) return;
+			while (key_home.consumeClick()) {
+				player.connection.sendCommand("home");
+			}
+		});
+		
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			var player = client.player;
+			if (player == null) return;
+			while (key_back.consumeClick()) {
+				player.connection.sendCommand("back");
+			}
+		});
+		
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (!ClientMain.enabled) return;
 			var player = client.player;
@@ -107,7 +154,7 @@ public class ClientMain implements ClientModInitializer {
 			}
 		});
 		
-		ConfigFileIO.load_config(0);
+		// ConfigFileIO.load_config(0);
 		
 	}
 	

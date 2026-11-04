@@ -2,6 +2,8 @@
 	"key.category.minecraft.source_movement": "Source Movement",
 	"key.source_movement.disable": "Disable mod",
 	"key.source_movement.boost": "Boost",
+	"key.source_movement.home": "Home",
+	"key.source_movement.back": "Back",
 	"key.source_movement.useconfig1": "Use Config 1",
 	"key.source_movement.useconfig2": "Use Config 2",
 	"key.source_movement.useconfig3": "Use Config 3",
